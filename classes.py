@@ -1,8 +1,6 @@
 """
-Specifies the Car dataclass,
-ChargeStation (ADT graph vertex) dataclass,
-Path (ADT graph edge) dataclass,
-and ChargeNetwork (ADT graph) class.
+Specifies the Car dataclass, ChargeStation (ADT graph vertex) dataclass,
+Path (ADT graph edge) dataclass, and ChargeNetwork (ADT graph) class.
 """
 from dataclasses import dataclass
 from typing import Callable
@@ -13,11 +11,12 @@ import datetime
 class Car:
     """A dataclass representing a car make and model.
     This dataclass in immutable so that it is not mutated after being passed to ChargeNetwork,
-    which initializes itself based on Car properties.
+    which initializes itself based on Car properties (specifically range).
 
     Instance Attributes:
       - make: the make of the car
       - model: the model of the car
+      - range: the full range of the car in kilometers
       - charge_time_func: a (possibly anonymous) function which can take two number inputs x and y where
                           x represents the starting battery percentage (0 <= x <= 1) and
                           y represents the ending battery percentage (0 <= x <= 1) and
@@ -29,6 +28,7 @@ class Car:
     """
     make: str
     model: str
+    range: int
     charge_time_func: Callable[[float, float], float]
 
 
@@ -64,8 +64,8 @@ class Path:
     Instance Attributes:
       - start: the start ChargeStation
       - end: the end ChargeStation
-      - road_distance: the driving distance between start and end
-      - time: the driving time between start and end
+      - road_distance: the driving distance between start and end in kilometers
+      - time: the driving time between start and end in seconds
       - polyline: ordered coordinates forming the polyline of the driving route between start and end
     """
     start: ChargeStation
@@ -76,9 +76,9 @@ class Path:
 
 
 class ChargeNetwork:
-    """A graph ADT representing a charge network for a SPECIFIC car range.
-    A path from one ChargeStation to another will not be considered if its
-    road length is longer than car_range.
+    """A graph ADT representing a charge network for a SPECIFIC car.
+    A path from one ChargeStation to another will not be considered (in the graph) if its
+    road_distance is longer than self.car.range.
 
     Instance Attributes:
       - car: the car this graph is based off of
