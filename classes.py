@@ -18,11 +18,10 @@ class Car:
     Instance Attributes:
       - make: the make of the car
       - model: the model of the car
-      - charge_time_func: a headless function which can take two number inputs x and y where
+      - charge_time_func: a (possibly anonymous) function which can take two number inputs x and y where
                           x represents the starting battery percentage (0 <= x <= 1) and
-                          y represents the ending battery percentage (0 <= x <= 1)
-                          where (x <= y) and returns the number of seconds
-                          the car will take to charge
+                          y represents the ending battery percentage (0 <= x <= 1) and
+                          x <= y which returns the number of seconds the car will take to charge
 
     >>> m3 = Car('Apache Automotive',
     ...          'EV Linear Charger',
