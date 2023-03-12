@@ -84,11 +84,12 @@ class ChargeNetwork:
       - car: the car this graph is based off of
 
     Representation Invariants:
-      - every Path in _graph contains the ChargeStation of its key as a Path.start or Path.end
+      - every Path in _graph contains the ChargeStation of its key as Path.start or Path.end
+      - in each _graph value set, there are NOT two Paths where (Path1.start = Path2.end and Path1.end = Path2.start)
     """
     # Private Instance Attributes:
     #   - _graph: a dict of ChargeStations and corresponding set of paths
-    _car: Car  # this
+    _car: Car
     _graph: dict[ChargeStation, set[Path]]
 
     def __init__(self, car) -> None:
