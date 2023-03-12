@@ -1,27 +1,29 @@
 """
-This module contains the basic methods and classes required for loading the data into a list of chargers"""
+This module contains the basic methods and classes required for loading the data into a list of chargers
+"""
 from __future__ import annotations
 
 import datetime
 import math
 from typing import Optional
-from dataclasses import dataclass
 
-@dataclass
-class Charger:
-    """This dataclass contains all the information about our chargers
 
-    Instance Attributes:
-        latitude: the charger's latitude position
-        longitude: the charger's longitude position
-        open_date: the date at which this charger was open
-        cluster: if this charger is near other chargers
-        (should not be accessed outside load_chargers_and_remove_clusters)
-    """
-    latitude: float
-    longitude: float
-    open_date: datetime.date
-    cluster: Optional[list[Charger]] = None
+
+
+
+# TODO:
+"""
+FIRST FUNCTION: LOAD DATA INTO A GRAPH
+SECOND FUNCTION: SIMPLIFY THE GRAPH BY CLUSTERING
+THIRD FUNCTION: CREATE ALL THE PATHS
+- there will be a helper function with the API which will take 2 coordinates
+"""
+
+
+
+
+
+
 
 
 
