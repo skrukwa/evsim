@@ -5,26 +5,6 @@ from __future__ import annotations
 
 import datetime
 import math
-from typing import Optional
-
-
-
-
-
-# TODO:
-"""
-FIRST FUNCTION: LOAD DATA INTO A GRAPH
-SECOND FUNCTION: SIMPLIFY THE GRAPH BY CLUSTERING
-THIRD FUNCTION: CREATE ALL THE PATHS
-- there will be a helper function with the API which will take 2 coordinates
-"""
-
-def load_chargers_to_graph
-
-
-
-
-
 
 
 def load_chargers_and_remove_clusters(data: str, distance_sen: float, quantity_sen: int)-> set[Charger]:
