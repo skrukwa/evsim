@@ -1,10 +1,12 @@
 """
 Specifies the Car dataclass, ChargeStation (ADT graph vertex) dataclass,
-Path (ADT graph edge) dataclass, and ChargeNetwork (ADT graph) class.
+_Path (ADT graph edge) dataclass, and ChargeNetwork (ADT graph) class.
 """
+from __future__ import annotations
+import csv
 from dataclasses import dataclass
-from typing import Callable
-import datetime
+from typing import Callable, Optional
+from datetime import datetime
 
 
 @dataclass(frozen=True)
@@ -29,7 +31,8 @@ class Car:
     make: str
     model: str
     range: int
-    charge_time_func: Callable[[float, float], float]
+    charge_time_func: Optional[Callable[[float, float], float]] = None
+    # I made charge_time_func optional for testing reasons since we don't have this implemented
 
 
 @dataclass(frozen=True)
@@ -53,9 +56,25 @@ class ChargeStation:
     longitude: float
     open_date: datetime.date
 
+def load_chargers_to_graph(car: Car,data: str) -> ChargeNetwork:
+    graph = ChargeNetwork(car)
+    with open(data) as f:
+        reader = csv.reader(f, delimiter=',')
+        # Skip the first header row.
+        next(reader)
+        for line in reader:
+            new_charger = ChargeStation(
+                name=str(line[1]),
+                address=str(line[2]),
+                hours=str(line[12]),
+                latitude=float(line[24]),
+                longitude=float(line[25]),
+                open_date=datetime.strptime(line[32], '%Y-%m-%d').date())
+            graph.add_charge_station(new_charger, None)
+    return graph
 
 @dataclass
-class Path:
+class _Path:
     """A dataclass representing a path from one charge station to another.
     This dataclass is used as edges in the ChargeNetwork class.
     Also, while trip direction matters here, this is only to keep polyline
@@ -81,23 +100,33 @@ class ChargeNetwork:
     road_distance is longer than self.car.range.
 
     Instance Attributes:
-      - car: the car this graph is based off of
+      - car: the car this graph is based off of (immutable)
 
     Representation Invariants:
-      - every Path in _graph contains the ChargeStation of its key as Path.start or Path.end
-      - in each _graph value set, there are NOT two Paths where (Path1.start = Path2.end and Path1.end = Path2.start)
+      - every _Path in _graph contains the ChargeStation of its key as path.start or path.end
+      - in each _graph value set, there are NOT two _Paths where (path1.start = path2.end and path1.end = path2.start)
     """
     # Private Instance Attributes:
     #   - _graph: a dict of ChargeStations and corresponding set of paths
     _car: Car
-    _graph: dict[ChargeStation, set[Path]]
+    _graph: dict[ChargeStation, set[_Path] | None]  # I made it also possibly none
 
     def __init__(self, car) -> None:
         """Initialize an empty graph."""
         self._car = car
         self._graph = {}
 
+    def add_charge_station(self, station: ChargeStation, paths: set[_Path] | None):
+        """Adds a charge station 'station' to the graph with the set of paths 'paths' leading to and from it
+         """
+        self._graph[station] = paths
+
     @property
     def car(self):
         """An immutable getter for self._car."""
         return self._car
+
+if __name__ == '__main__':
+    #TEST
+    m3 = Car('Apache Automotive', 'EV Linear Charger', lambda start, end: (100 * end) ** 2 - (100 * start) ** 2)
+    graph = load_chargers_to_graph(m3,'alberta_sample_subset.csv')

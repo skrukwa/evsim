@@ -19,7 +19,7 @@ THIRD FUNCTION: CREATE ALL THE PATHS
 - there will be a helper function with the API which will take 2 coordinates
 """
 
-
+def load_chargers_to_graph
 
 
 
@@ -55,6 +55,10 @@ def load_chargers_and_remove_clusters(data: str, distance_sen: float, quantity_s
             new_charger = Charger(latitude=float(line[lat_index]),
                                   longitude=float(line[long_index]),
                                   open_date=string_from_data_to_date(line[date_index]))
+
+
+
+
             for charger in chargers:
                 if chargers_to_km(charger, new_charger) >= distance_sen:
                     if new_charger.cluster is None and charger.cluster is None:
