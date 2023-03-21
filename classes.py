@@ -116,10 +116,18 @@ class ChargeNetwork:
         self._car = car
         self._graph = {}
 
-    def add_charge_station(self, station: ChargeStation, paths: set[_Path] | None):
+    def add_charge_station(self, station: ChargeStation, paths: set[_Path] | None) -> None:
         """Adds a charge station 'station' to the graph with the set of paths 'paths' leading to and from it
          """
         self._graph[station] = paths
+
+    def clear_graph(self) -> None:
+        """Delete all entries in the graph"""
+        self._graph = {}
+
+    def get_charge_stations(self) -> list[ChargeStation]:
+        """Returns a list of charge stations in the charge network"""
+        return list(self._graph.keys())
 
     @property
     def car(self):

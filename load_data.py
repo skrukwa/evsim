@@ -19,7 +19,6 @@ THIRD FUNCTION: CREATE ALL THE PATHS
 - there will be a helper function with the API which will take 2 coordinates
 """
 
-def load_chargers_to_graph
 
 
 
