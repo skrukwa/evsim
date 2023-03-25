@@ -63,13 +63,12 @@ class TreeCluster:
     def get_list_of_clusters(self) -> list[list[ChargeStation]]:
         """returns a list of lists containing each subcluster"""
         if self._complete:
-            return [[tree._centroid for tree in self._subcluster]]
+            return [[self._centroid] + [tree._centroid for tree in self._subcluster]]
         else:
             return_val = []
             for i in self._subcluster:
                 return_val.extend(i.get_list_of_clusters())
             return return_val
-
 
     def create_subclusters(self) -> None:
         """"splits the leafs into subclusters"""
@@ -80,7 +79,7 @@ class TreeCluster:
             return
         # else
         reference_stations = find_furthest_charge_stations([tree._centroid for tree in self._subcluster])
-        print(reference_stations)
+        # print(reference_stations)
         new_cluster1 = []
         new_cluster2 = []
         for i in self._subcluster:
