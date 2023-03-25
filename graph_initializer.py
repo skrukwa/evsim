@@ -64,8 +64,6 @@ def googlemaps_something_matrix_requester(a) -> ...:
     """
 
 
-
-
 if __name__ == '__main__':
     from visuals import temp_basic_map
     # TEST
@@ -81,3 +79,6 @@ if __name__ == '__main__':
     temp_basic_map(network)
 
     print(len(network._graph))
+    import cluster
+    tree = cluster.TreeCluster(10, network.get_charge_stations())
+    print(tree.get_list_of_clusters())

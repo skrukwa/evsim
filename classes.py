@@ -120,12 +120,6 @@ class ChargeNetwork:
         self._car = car
         self._graph = {}
 
-<<<<<<< HEAD
-    def add_charge_station(self, station: ChargeStation, paths: set[_Path] | None) -> None:
-        """Adds a charge station 'station' to the graph with the set of paths 'paths' leading to and from it
-         """
-        self._graph[station] = paths
-
     def clear_graph(self) -> None:
         """Delete all entries in the graph"""
         self._graph = {}
@@ -134,8 +128,7 @@ class ChargeNetwork:
         """Returns a list of charge stations in the charge network"""
         return list(self._graph.keys())
 
-=======
->>>>>>> 2fa4c8b46e625c38be3e822f32f7eb5c8306c6c2
+
     @property
     def car(self):
         """An immutable getter for self._car."""
