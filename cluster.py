@@ -75,8 +75,6 @@ class TreeCluster:
         if len(self._subcluster) < 2 or all(chargers_to_km(c1._centroid, c2._centroid) < self._distance for c1 in
                                             self._subcluster for c2 in self._subcluster):
             self._complete = True
-            """for i in self._subcluster:
-                i._complete = True"""
             return
         # else
         reference_stations = find_furthest_charge_stations([tree._centroid for tree in self._subcluster])
