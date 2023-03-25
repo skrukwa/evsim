@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Optional
 import math
 from classes import ChargeNetwork, ChargeStation
-from sklearn.cluster import Birch  # add this to requirement.txt
+
 
 class TreeCluster:
     """Tree class designed to group charge stations into clusters
