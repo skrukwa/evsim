@@ -87,8 +87,8 @@ class _Edge:
     """
     start: ChargeStation
     end: ChargeStation
-    road_distance: str
-    time: str
+    road_distance: float
+    time: int
     polyline: list[tuple]
 
 
@@ -106,6 +106,7 @@ class ChargeNetwork:
 
     Representation Invariants:
         - every _Edge object (e) in self._graph contains the ChargeStation of its key as e.start
+        TODO: how to aviod having duplicate _edge objects
     """
     # Private Instance Attributes:
     #   - _graph: a dict of ChargeStations and corresponding set of _Edge objects
