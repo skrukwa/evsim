@@ -80,10 +80,8 @@ if __name__ == '__main__':
 
     print(len(network._graph))
     import cluster
-    tree = cluster.TreeCluster(1000, network.get_charge_stations())
+    tree = cluster.TreeCluster(10, network.get_charge_stations())
     tree.create_subclusters()
     my_list = tree.get_list_of_clusters()
-
     temp_cluster_map(my_list)
     print(len(my_list))
-
