@@ -1,4 +1,5 @@
-from classes import Car, ChargeStation, ChargeNetwork
+"""TODO"""
+from classes import Car, ChargeNetwork
 import csv
 import datetime
 
@@ -7,6 +8,7 @@ def load_chargers_to_graph(charge_network: ChargeNetwork, filepath: str) -> None
     """Takes an empty ChargeNetwork object and adds each row of the csv
     at filepath as a charge station as long as it has a sum of at least
     charge_network.min_chargers_at_station type 2 and type DC chargers.
+
     This is a mutating method.
 
     Preconditions:
@@ -37,51 +39,36 @@ def load_chargers_to_graph(charge_network: ChargeNetwork, filepath: str) -> None
                 print('skipped this row due to a parsing error')
 
 
-def cluster_graph(charge_network: ChargeNetwork, approx_clusters: int) -> None:
-    """Clusters the charge stations in charge_network using
-    ...  # maybe gaussian ??
-    and then replaces each cluster with a single charge station at the mean location.
-    This is a mutating method.
-    """
-    ...
 
 
-def find_edges_to_add(charge_network: ChargeNetwork) -> None:
-    """
-    use googlemaps
-    """
 
-
-def add_edges(a) -> ...:
-    """
-    tbd
-    """
-
-
-def googlemaps_something_matrix_requester(a) -> ...:
-    """
-    prefer routes, but may have to do directions matrix
-    """
 
 
 if __name__ == '__main__':
     from visuals import *
-    # TEST
+    import cluster
+
     m3 = Car('Apache Automotive',
              'EV Linear Charger',
              250,
              lambda start, end: (100 * end) ** 2 - (100 * start) ** 2)
 
     network = ChargeNetwork(4, m3)
-
     load_chargers_to_graph(network, 'cali_subset.csv')
 
-    temp_basic_map(network)
+    graph_network(network)
+    print(len(network.charge_stations()))
 
-    print(len(network._graph))
-    import cluster
-    tree = cluster.TreeCluster(10, network.get_charge_stations())
-    tree.create_subclusters()
-    my_list = tree.get_list_of_clusters()
-    temp_cluster_map(my_list)
-    print(len(my_list))
+    tree = cluster.ClusterTree(network.charge_stations(), 20)
+
+    cluster_list = tree.get_list_of_clusters()
+
+    graph_clusters(cluster_list)
+    print(len(cluster_list))
+
+    centroids = tree.get_list_of_final_centroids()
+    simple_network = ChargeNetwork(4, m3)
+    for charger in centroids:
+        simple_network.add_charge_station(charger, None)
+
+    graph_network(simple_network)

@@ -1,227 +1,129 @@
-"""Implementing functions related to the process of removing clusters from our ChargeNetwork"""
+"""TODO"""
 from __future__ import annotations
-from typing import Any, Optional
-import math
-from classes import ChargeNetwork, ChargeStation
+from classes import ChargeStation
+import calcs
 
 
-class TreeCluster:
-    """Tree class designed to group charge stations into clusters
-    The leaves of the tree are actual existing charge stations
+class ClusterTree:
+    """A recursive Divisive Hierarchical Clustering tree which clusters charge stations until
+    each cluster has a diameter less than max_cluster_diameter.
+
+    After being fully initialized,
+        - every charge station in the graph can be found as a leaf
+        - every leaf is a ChargeStation object
+        - every non-leaf is a ClusterTree object
+        - every direct parent of a leaf is the centroid of a cluster of charge points
+          which are its children (including itself)
+        - given any node, a child is a leaf if and only if all children are leafs
+
+    Instance Attributes:
+        - max_cluster_diameter: the diameter under this size will not be further split up in kilometers
 
     Representation Invariants:
-    - self._centroid is not None or self._subcluster == []
+        - _max_cluster_diameter >= 0
     """
-    # Private Instance Attributes:
-    #   - _centroid:
-    #       The centermost chargestation in the subtree. None if the tree is empty.
-    #   - _subcluster:
-    #       The list of subclusters of this tree. This attribute is empty when
-    #       self._root is None (representing an empty tree). However, this attribute
-    #       may be empty when self._root is not None, which represents a tree consisting
-    #       of just one item.
-    _centroid: Optional[ChargeStation]
-    _complete: bool
-    _distance: float
-    _subcluster: list[TreeCluster]
+    _centroid: ChargeStation
+    _subclusters: set[ClusterTree | ChargeStation]
+    _max_cluster_diameter: float
 
-    def __init__(self, distance: float, stations: Optional[list[ChargeStation]] = None) -> None:
-        """Initialize a new Tree with the given root value and subtrees.
+    def __init__(self, charge_stations: set[ChargeStation], distance: float) -> None:
+        """Recursively initialize the tree using Divisive Hierarchical Clustering as referenced below.
 
-        If root is None, the tree is empty.
+        https://en.wikipedia.org/wiki/Hierarchical_clustering
+
+        This algorithm's structure roughly follows the steps outlined below.
+
+        STEP 1.
+        Assign the root as one charge station which represents the cluster of all charge stations given
+        (and all charge stations below it in the tree) using by minimizing the average distance to all
+        other charge stations.
+
+        STEP 2.
+        If all the charge stations are within the cluster distance specified then each charge
+        station can be added as a child of root, and the root represents the cluster.
+        Note that this implicitly covers len(charge_stations) == 1 since the distance would then be 0.
+
+        Otherwise, the charge stations are then split into two groups and recursed on (meaning
+        that this tree will be binary if we ignore leafs). This is done by picking the charge
+        stations that are the furthest apart, and then dividing the charge stations into two groups
+        depending based on the distance of each charge station to two chosen charge stations.
+
         Preconditions:
-            - root is not none or subtrees == []
+            - len(charge_stations) >= 1
         """
-        self._subcluster = []
-        if stations is None:
-            self._centroid = None
-        elif len(stations) == 1:
-            self._centroid = stations[0]
-        else:
-            for i in stations:
-                self._subcluster.append(TreeCluster(distance, [i]))
-            self._centroid = find_lowest_average_distance(stations)
-        self._distance = distance
-        self._complete = False
+        self._max_cluster_diameter = distance
 
-    def is_empty(self) -> bool:
-        """Return whether this tree is empty.
-        """
-        return self._centroid is None
+        # STEP 1. assign _centroid to be the charge station with the lowest average distance
+        #         to all charge stations it represents
 
-    def get_cluster_free_list(self) -> list[ChargeStation]:
-        """returns a list of all the stations in the tree after
-        removing all elements part of a cluster other than the centroids"""
-        if self._complete:
-            return [self._centroid]
+        self._centroid = calcs.find_lowest_average_distance(
+            points=charge_stations,
+            distance_func=calcs.great_circle_distance,
+            coords_key=lambda charger: charger.coord
+        )
+
+        # STEP 2. see if the charge stations need to be further clustered
+
+        charge_station1, charge_station2 = calcs.find_furthest_apart(
+            points=charge_stations,
+            distance_func=calcs.great_circle_distance,
+            coords_key=lambda charger: charger.coord
+        )
+
+        distance_furthest_apart = calcs.great_circle_distance(charge_station1.coord, charge_station2.coord)
+
+        if distance_furthest_apart <= self.max_cluster_diameter:
+            self._subclusters = charge_stations
         else:
-            return_val = []
-            for i in self._subcluster:
-                return_val.extend(i.get_cluster_free_list())
-            return return_val
+            new_cluster1 = set()
+            new_cluster2 = set()
+            for charge_station in charge_stations:
+                if calcs.great_circle_distance(charge_station.coord, charge_station1.coord) < \
+                   calcs.great_circle_distance(charge_station.coord, charge_station2.coord):
+                    new_cluster1.add(charge_station)
+                else:
+                    new_cluster2.add(charge_station)
+
+            self._subclusters = {
+                ClusterTree(new_cluster1, distance),
+                ClusterTree(new_cluster2, distance)
+            }
+
+    @property
+    def max_cluster_diameter(self) -> float:
+        """An immutable getter for self._car."""
+        return self._max_cluster_diameter
 
     def get_list_of_clusters(self) -> list[list[ChargeStation]]:
-        """returns a list of lists containing each subcluster"""
-        if self._complete:
-            return [[self._centroid] + [tree._centroid for tree in self._subcluster]]
-        else:
-            return_val = []
-            for i in self._subcluster:
-                return_val.extend(i.get_list_of_clusters())
-            return return_val
+        """Returns a list of clusters of charge stations by traversing the
+        tree in order to accumulate all groups of leafs."""
 
-    def create_subclusters(self) -> None:
-        """"splits the leafs into subclusters"""
-        if len(self._subcluster) < 2 or all(chargers_to_km(c1._centroid, c2._centroid) < self._distance for c1 in
-                                            self._subcluster for c2 in self._subcluster):
-            self._complete = True
-            return
-        # else
-        reference_stations = find_furthest_charge_stations([tree._centroid for tree in self._subcluster])
-        # print(reference_stations)
-        new_cluster1 = []
-        new_cluster2 = []
-        for i in self._subcluster:
-            if chargers_to_km(i._centroid, reference_stations[0]) < chargers_to_km(i._centroid, reference_stations[1]):
-                new_cluster1.append(i._centroid)
-            else:
-                new_cluster2.append(i._centroid)
-        self._subcluster = [TreeCluster(self._distance, new_cluster1),
-                            TreeCluster(self._distance, new_cluster2)]
-        self._subcluster[0].create_subclusters()
-        self._subcluster[1].create_subclusters()
+        assert self._subclusters  # we should not have recursed into leafs
 
-def chargers_to_km(charger1: ChargeStation, charger2: ChargeStation) -> float:
-    """
-    Returns the great circle distance between two chargers
-    :param charger1: First Charger
-    :param charger2: Second Charger
-    :return: Distance in Km
-    """
-    return longitude_and_latitude_to_km(charger1.longitude, charger1.latitude, charger2.longitude,
-                                        charger2.latitude)
+        random_child = next(iter(self._subclusters))
 
+        if isinstance(random_child, ChargeStation):  # the child is a leaf, so in this tree, all childern are leafs
+            return [list(self._subclusters)]
 
-def clusterGraph(graph: ChargeNetwork, distance: float) -> None:
-    """Mutates graph by removing all clustered charge station
+        else:  # the child is not a leaf, so in this tree, all children are not leafs
+            result = []
+            for child in self._subclusters:
+                result.extend(child.get_list_of_clusters())
+            return result
 
-    Precondition:
-    - Graph has no paths (they will all be deleted!)
-    """
-    cluster_tree = TreeCluster(distance, graph.get_charge_stations())
-    cluster_tree.create_subclusters()
-    graph.clear_graph()
-    for i in cluster_tree.get_cluster_free_list():
-        graph.add_charge_station(i, None)
+    def get_list_of_final_centroids(self) -> list[ChargeStation]:
+        """Returns a list of charge stations which are the centroids representing the clusters
+        of charge stations by traversing the tree in order to accumulate all parents of groups of leafs."""
 
+        assert self._subclusters  # we should not have recursed into leafs
 
+        random_child = next(iter(self._subclusters))
 
-def find_furthest_charge_stations(chargers: list[ChargeStation]) -> tuple[ChargeStation, ChargeStation]:
-    """Finds the two charge stations that are the furthest away if there are fewer than 2 charge stations
-    raise index error
-    """
-    n = len(chargers)
-    if n < 2:
-        raise IndexError
+        if isinstance(random_child, ChargeStation):  # the child is a leaf, so in this tree, all childern are leafs
+            return [self._centroid]
 
-    max_distance = 0
-    point1 = chargers[0]
-    point2 = chargers[1]
-
-    # compare each pair of points and update furthest points
-    for i in range(n):
-        for j in range(i + 1, n):
-            distance = chargers_to_km(chargers[i], chargers[j])
-            if distance > max_distance:
-                max_distance = distance
-                point1 = chargers[i]
-                point2 = chargers[j]
-
-    return (point1, point2)
-
-def find_lowest_average_distance(chargers: list[ChargeStation]):
-    """"
-    Takes a list of ChargeStations coords and returns the ChargeStation with the lowest average distance to all other
-    charge stations
-    """
-    min_avg_distance = float('inf')
-    min_index = 0
-    for i in range(len(chargers)):
-        total_distance = 0
-        for j in range(len(chargers)):
-            if i != j:
-                total_distance += chargers_to_km(chargers[i], chargers[j])
-        avg_distance = total_distance / (len(chargers)-1)
-        if avg_distance < min_avg_distance:
-            min_avg_distance = avg_distance
-            min_index = i
-    return chargers[min_index]
-
-
-def longitude_and_latitude_to_km(long1: float, lat1: float, long2: float, lat2: float) -> float:
-    """
-    Returns the great circle distance between two points on the earth using equation:
-        https://en.wikipedia.org/wiki/Great-circle_distance
-    Earth radius:
-        https://en.wikipedia.org/wiki/Earth_radius
-    :param long1: Longitude value of first point
-    :param lat1: Latitude value of first point
-    :param long2: Longitude value of Second point
-    :param lat2: Latitude value of first point
-    :return: Distance in Km
-
-    Preconditions:
-    - -180 <= long1 <= 180
-    - -90 <= lat1 <= 90
-    - -180 <= long2 <= 180
-    - -90 <= lat2 <= 90
-
-    >>> round(longitude_and_latitude_to_km(-179, 50, 100, -50))
-    13508
-    """
-    EARTH_RADIUS_KM = 6371
-    lat1_rad = (math.pi / 180) * lat1
-    long1_rad = (math.pi / 180) * long1
-    lat2_rad = (math.pi / 180) * lat2
-    long2_rad = (math.pi / 180) * long2
-
-    latitude_diff = abs(lat1_rad - lat2_rad)
-    longitude_diff = abs(long1_rad - long2_rad)
-    central_angle = 2 * (math.asin(math.sqrt(hav(latitude_diff) + (1 - hav(latitude_diff) - hav(lat1_rad + lat2_rad))
-                                             * hav(longitude_diff))))
-    return EARTH_RADIUS_KM * central_angle
-
-def hav(num: float) -> float:
-    """returns the harversine of the number"""
-    return math.sin(num / 2) ** 2
-
-
-# def remove_cluster(network: ChargeNetwork, threshold: float, sens: int) -> ChargeNetwork:
-#     charge_stations = network.get_charge_stations()
-#     data = [[station.latitude, station.longitude] for station in charge_stations()]
-#     birch_tree = Birch(n_clusters=None, threshold=threshold)
-#     birch_tree.fit(data)
-#     labels = birch_tree.fit_predict(data)
-#     clusters = {}
-#     for i in range(len(labels)):
-#         if labels[i] not in clusters:
-#             clusters[labels[i]] = []
-#         clusters[labels[i]] += charge_stations[i]
-#     final_charger_list = []
-#     for j in clusters:
-#         if len(j) >= sens:
-#             final_charger_list += birch_tree.
-#     return NotImplemented
-
-
-"""
-Create a function that assigns a cluster to every charger to a cluster, then create a new tree with only the centroids
-
-New implementation:
-- Function(graph) -> return list[list[chargers]] with clusters
-- Bottom up approach to tree clustering
-- Check that it runs well
-- Check it looks good
-
-
-"""
+        else:  # the child is not a leaf, so in this tree, all children are not leafs
+            result = []
+            for child in self._subclusters:
+                result.extend(child.get_list_of_final_centroids())
+            return result

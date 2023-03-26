@@ -20,7 +20,7 @@ information, please follow the github link above.
 This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
 """
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Iterable, Optional
 import datetime
 
 
@@ -71,33 +71,48 @@ class ChargeStation:
     longitude: float
     open_date: datetime.date
 
+    @property
+    def coord(self):
+        return self.latitude, self.longitude
 
-@dataclass
+
 class _Edge:
     """A dataclass representing an edge (driving route) from one charge station to another.
-    Also, while trip direction matters here, this is only to keep polyline
-    in the correct order. road_distance and time can be treated as reversible.
 
     Instance Attributes:
-        - start: the start ChargeStation
-        - end: the end ChargeStation
-        - road_distance: the driving distance between start and end in kilometers
-        - time: the driving time between start and end in seconds
-        - polyline: ordered coordinates forming the polyline of the driving route between start and end
+        - endpoints: the start and end charge stations of this edge
+        - road_distance: the driving distance between endpoints in kilometers
+        - time: the driving time between endpoints in seconds
+
+    Representation Invariants:
+    - len(self.endpoints) == 2
     """
-    start: ChargeStation
-    end: ChargeStation
+    endpoints: set[ChargeStation]
     road_distance: float
     time: int
-    polyline: list[tuple]
+
+    def __int__(self, charger1: ChargeStation, charger2: ChargeStation, road_distance: float, time: int):
+        self.endpoints = {charger1, charger2}
+        self.road_distance = road_distance
+        self.time = time
+
+    def get_other_endpoint(self, charger: ChargeStation) -> ChargeStation:
+        """Return the endpoint of this edge that is not equal to the given charge station.
+
+        Preconditions:
+            - charger in self.endpoints
+        """
+        return (self.endpoints - {charger}).pop()
 
 
 class ChargeNetwork:
     """A graph ADT representing a charge network for a SPECIFIC car.
+
     An edge from one ChargeStation to another will not be considered (in the graph) if its
-    road_distance is longer than self.car.range. Furthermore, if a ChargeStation in the
-    graph has its set of edges as None (as opposed to an empty set), it denotes that the edges have
-    not yet been initialized.
+    road_distance is longer than self.car.range.
+
+    Note, if a charge station in this graph has its set of edges as None (as opposed to an empty set),
+    it denotes that the edges have not yet been initialized.
 
     Instance Attributes:
         - car: the car this graph is based off of (immutable)
@@ -105,14 +120,13 @@ class ChargeNetwork:
                                    charge station in this graph (immutable)
 
     Representation Invariants:
-        - every _Edge object (e) in self._graph contains the ChargeStation of its key as e.start
-        TODO: how to aviod having duplicate _edge objects
+        - all(all(charger in edge for edge in edge_set) for charger, edge_set in _graph.items())
     """
     # Private Instance Attributes:
-    #   - _graph: a dict of ChargeStations and corresponding set of _Edge objects
+    #   - _graph: a dict of charge stations and corresponding edges
     _car: Car
     _min_chargers_at_station: int
-    _graph: dict[ChargeStation, set[_Edge] | None]
+    _graph: dict[ChargeStation, Optional[set[_Edge]]]
 
     def __init__(self, min_chargers_at_station, car) -> None:
         """Initialize an empty graph."""
@@ -120,31 +134,26 @@ class ChargeNetwork:
         self._car = car
         self._graph = {}
 
-    def clear_graph(self) -> None:
-        """Delete all entries in the graph"""
-        self._graph = {}
-
-    def get_charge_stations(self) -> list[ChargeStation]:
-        """Returns a list of charge stations in the charge network"""
-        return list(self._graph.keys())
-
-
     @property
-    def car(self):
-        """An immutable getter for self._car."""
-        return self._car
-
-    @property
-    def min_chargers_at_station(self):
+    def min_chargers_at_station(self) -> int:
         """An immutable getter for self._car."""
         return self._min_chargers_at_station
 
-    def is_empty(self) -> bool:
-        """Return whether this ChargeNetwork object is empty."""
-        return self._graph == {}
+    @property
+    def car(self) -> Car:
+        """An immutable getter for self._car."""
+        return self._car
 
-    def add_charge_station(self, station: ChargeStation, edges: set[_Edge] | None):
-        """Adds a charge station and corresponding set of edges to the graph.
+    def is_empty(self) -> bool:
+        """Returns whether this graph is empty."""
+        return not self._graph
+
+    def charge_stations(self) -> set[ChargeStation]:
+        """Returns a set of charge stations in the charge network."""
+        return set(self._graph.keys())
+
+    def add_charge_station(self, station: ChargeStation, edges: Optional[set[_Edge]] = None) -> None:
+        """Adds a charge station (and optionally a corresponding set of edges) to the graph.
 
         Preconditions:
             - station not in self._graph
