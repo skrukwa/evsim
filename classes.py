@@ -23,6 +23,7 @@ from dataclasses import dataclass
 from typing import Optional
 import datetime
 import calcs
+import random
 
 
 @dataclass(frozen=True)
@@ -146,7 +147,7 @@ class ChargeNetwork:
 
         Preconditions
             - charge_station in self._graph"""
-        return self._graph[charge_station]
+        return {i for i in self._graph[charge_station]}
 
     def add_charge_station(self, station: ChargeStation, edges: set[_Edge]) -> None:
         """Adds a charge station (and optionally a corresponding set of edges) to the graph.
@@ -213,9 +214,18 @@ class ChargeNetwork:
             other_charger = u.get_other_endpoint(charge1)
             if other_charger not in visited:
                 neighbors_path = self.get_shortest_path_helper(other_charger, charge2, visited, new_min)
-                neighbors_path_len = sum([i.road_distance for i in neighbors_path]) + u.road_distance
                 if neighbors_path is not None:
+                    neighbors_path_len = sum([i.road_distance for i in neighbors_path]) + u.road_distance
                     if new_min is None or new_min > neighbors_path_len:
                         new_min = neighbors_path_len
                         my_output = ([u] + neighbors_path)
         return my_output
+
+if __name__ == '__main__':
+    import pickle
+    with open('cali_done.pickle', 'rb') as file:
+        obj = pickle.load(file)
+    st = obj.charge_stations()
+    st1 = random.sample(st, 1)[0]
+    st2 = random.sample(st, 1)[0]
+    t = obj.get_shortest_path(st1, st2)
