@@ -2,6 +2,8 @@
 from classes import ChargeNetwork, ChargeStation
 import csv
 import datetime
+from shapely.geometry import Point  # todo add shapely to requirements.txt
+from shapely.geometry.polygon import Polygon
 
 
 def load_chargers_to_graph(charge_network: ChargeNetwork, filepath: str) -> None:
@@ -51,6 +53,15 @@ def load_chargers_to_graph(charge_network: ChargeNetwork, filepath: str) -> None
 
 
 def _in_mainland(lat: float, lon: float) -> bool:
-    """Returns True if the given coordinate is in mainland North America."""
-    # TODO: impliment the func
-    return True
+    """Returns True if the given coordinate is in mainland North America.
+    >>> _in_mainland(40.7128, -74.0060) # (New York)
+    True
+    >>> _in_mainland(49.2827, -123.1207) # (Vancouver)
+    True
+    >>> _in_mainland(51.5074, -0.1278) # (London)
+    False
+    """
+    point = Point(lat, lon)
+    north_america_polygon = Polygon([(70.5, -170), (70, -85), (51, -50), (25, -81), (30, -90), (20, -95), (21, 87),
+                                     (8.5, -77), (6, -80), (20, -110), (50, -135), (53, -170)])
+    return north_america_polygon.contains(point)
