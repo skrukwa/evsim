@@ -17,7 +17,8 @@ class ClusterTree:
         - given any node, a child is a leaf if and only if all children are leafs
 
     Instance Attributes:
-        - max_cluster_diameter: the diameter under this size will not be further split up in kilometers
+        - max_cluster_diameter: the diameter in kilometers of a circle such that clusters which fit
+                                into the circle will not be further split up (immutable)
 
     Representation Invariants:
         - _max_cluster_diameter >= 0
@@ -91,7 +92,7 @@ class ClusterTree:
 
     @property
     def max_cluster_diameter(self) -> float:
-        """An immutable getter for self._car."""
+        """An immutable getter for self._max_cluster_diameter."""
         return self._max_cluster_diameter
 
     def get_list_of_clusters(self) -> list[list[ChargeStation]]:

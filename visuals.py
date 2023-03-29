@@ -20,26 +20,53 @@ import plotly.graph_objects as go
 
 
 def graph_network(network: ChargeNetwork) -> None:
-    """Creates a visualization of the charge stations in the given charge network on a map.
+    """Creates a visualization of the charge stations and edges in the given charge network on a map.
 
     Every charge station is graphed on the same layer (trace) and has the same color.
+    Every edge is graphed on the same layer (trace) and has the same color.
     """
+    fig = go.Figure()
 
-    latitudes = []
-    longitudes = []
-    names = []
+    marker_latitudes = []
+    marker_longitudes = []
+    marker_names = []
+    line_latitudes = []
+    line_longitudes = []
+    edges_seen = {}
+
     for charger in network.charge_stations():
-        names.append(charger.name)
-        latitudes.append(charger.latitude)
-        longitudes.append(charger.longitude)
+        marker_names.append(charger.name)
+        marker_latitudes.append(charger.latitude)
+        marker_longitudes.append(charger.longitude)
 
-    fig = go.Figure(
+        edges = network.corresponding_edges(charger)
+        for edge in edges:
+            if edge not in edges_seen:
+                endpoints_iter = iter(edge.endpoints)
+                p1 = next(endpoints_iter).coord
+                p2 = next(endpoints_iter).coord
+                line_latitudes.append(p1[0])
+                line_latitudes.append(p2[0])
+                line_latitudes.append(None)
+                line_longitudes.append(p1[1])
+                line_longitudes.append(p2[1])
+                line_longitudes.append(None)
+
+    fig.add_trace(
         go.Scattergeo(
-            lat=latitudes,
-            lon=longitudes,
-            text=names,
+            lat=marker_latitudes,
+            lon=marker_longitudes,
+            text=marker_names,
             hoverinfo='all',
             mode='markers'
+        )
+    )
+
+    fig.add_trace(
+        go.Scattergeo(
+            lat=line_latitudes,
+            lon=line_longitudes,
+            mode='lines'
         )
     )
 

@@ -5,7 +5,6 @@ Description
 ===========
 
 This module specifies the following:
-  - Car dataclass
   - ChargeStation (ADT graph vertex) dataclass
   - _Edge (ADT graph edge) dataclass
   - ChargeNetwork (ADT graph) class
@@ -19,35 +18,11 @@ information, please follow the github link above.
 
 This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
 """
+from __future__ import annotations
 from dataclasses import dataclass
-from typing import Callable, Iterable, Optional
+from typing import Optional
 import datetime
-
-
-@dataclass(frozen=True)
-class Car:
-    """A dataclass representing a car make and model.
-    This dataclass in immutable so that it is not mutated after being passed to ChargeNetwork,
-    which initializes itself based on Car properties (specifically range).
-
-    Instance Attributes:
-        - make: the make of the car
-        - model: the model of the car
-        - range: the full range of the car in kilometers
-        - charge_time_func: a (possibly anonymous) function which can take two number inputs x and y where
-                            x represents the starting battery percentage (0 <= x <= 1) and
-                            y represents the ending battery percentage (0 <= x <= 1) and
-                            x <= y which returns the number of seconds the car will take to charge
-
-    >>> m3 = Car('Apache Automotive',
-    ...          'EV Linear Charger',
-    ...          250,
-    ...          lambda start, end: (100 * end) ** 2 - (100 * start) ** 2)
-    """
-    make: str
-    model: str
-    range: int
-    charge_time_func: Callable[[float, float], float]
+import calcs
 
 
 @dataclass(frozen=True)
@@ -79,43 +54,53 @@ class ChargeStation:
 class _Edge:
     """A dataclass representing an edge (driving route) from one charge station to another.
 
+    An edge is said to be equal to another if its endpoints are equal.
+
+    NOTE: A user of this class is forbidden to create duplicate edges (it will result in duplicate hashes).
+
     Instance Attributes:
-        - endpoints: the start and end charge stations of this edge
+        - endpoints: the start and end charge stations of this edge (immutable)
         - road_distance: the driving distance between endpoints in kilometers
-        - time: the driving time between endpoints in seconds
+        - time: the driving duration between endpoints in seconds
 
     Representation Invariants:
-    - len(self.endpoints) == 2
+        - len(self.endpoints) == 2
     """
-    endpoints: set[ChargeStation]
-    road_distance: float
-    time: int
+    _endpoints: set[ChargeStation]
+    road_distance: Optional[float]
+    time: Optional[int]
 
-    def __int__(self, charger1: ChargeStation, charger2: ChargeStation, road_distance: float, time: int):
-        self.endpoints = {charger1, charger2}
+    def __init__(self,
+                 charger1: ChargeStation,
+                 charger2: ChargeStation,
+                 road_distance: float = None,
+                 time: int = None) -> None:
+
+        self._endpoints = {charger1, charger2}
         self.road_distance = road_distance
         self.time = time
 
-    def get_other_endpoint(self, charger: ChargeStation) -> ChargeStation:
-        """Return the endpoint of this edge that is not equal to the given charge station.
+    @property
+    def endpoints(self):
+        return self._endpoints
 
-        Preconditions:
-            - charger in self.endpoints
-        """
-        return (self.endpoints - {charger}).pop()
+    def __eq__(self, other: _Edge):
+        return self.endpoints == other.endpoints
+
+    def __hash__(self):
+        coords = [charger.coord for charger in self.endpoints]
+        coords.sort()
+        return hash((self.__class__, coords[0], coords[1]))
 
 
 class ChargeNetwork:
-    """A graph ADT representing a charge network for a SPECIFIC car.
+    """A graph ADT representing a charge network.
 
-    An edge from one ChargeStation to another will not be considered (in the graph) if its
-    road_distance is longer than self.car.range.
-
-    Note, if a charge station in this graph has its set of edges as None (as opposed to an empty set),
-    it denotes that the edges have not yet been initialized.
+    An edge from one charge station to another will not be considered (in the graph) if its
+    road_distance is longer than self._ev_range.
 
     Instance Attributes:
-        - car: the car this graph is based off of (immutable)
+        - ev_range: the range of the EV vehicle this graph is based off of in kilometers (immutable)
         - min_chargers_at_station: the min sum of type 2 and type DC chargers at each
                                    charge station in this graph (immutable)
 
@@ -124,25 +109,25 @@ class ChargeNetwork:
     """
     # Private Instance Attributes:
     #   - _graph: a dict of charge stations and corresponding edges
-    _car: Car
+    _ev_range: int
     _min_chargers_at_station: int
-    _graph: dict[ChargeStation, Optional[set[_Edge]]]
+    _graph: dict[ChargeStation, set[_Edge]]
 
     def __init__(self, min_chargers_at_station, car) -> None:
         """Initialize an empty graph."""
         self._min_chargers_at_station = min_chargers_at_station
-        self._car = car
+        self._ev_range = car
         self._graph = {}
 
     @property
     def min_chargers_at_station(self) -> int:
-        """An immutable getter for self._car."""
+        """An immutable getter for self._min_chargers_at_station."""
         return self._min_chargers_at_station
 
     @property
-    def car(self) -> Car:
-        """An immutable getter for self._car."""
-        return self._car
+    def ev_range(self) -> int:
+        """An immutable getter for self._ev_range."""
+        return self._ev_range
 
     def is_empty(self) -> bool:
         """Returns whether this graph is empty."""
@@ -152,10 +137,63 @@ class ChargeNetwork:
         """Returns a set of charge stations in the charge network."""
         return set(self._graph.keys())
 
-    def add_charge_station(self, station: ChargeStation, edges: Optional[set[_Edge]] = None) -> None:
+    def corresponding_edges(self, charge_station) -> set[_Edge]:
+        """Returns a set of edges corresponding to charge_station in the charge network.
+
+        Preconditions
+            - charge_station in self._graph"""
+        return self._graph[charge_station]
+
+    def add_charge_station(self, station: ChargeStation, edges: set[_Edge]) -> None:
         """Adds a charge station (and optionally a corresponding set of edges) to the graph.
 
         Preconditions:
             - station not in self._graph
          """
         self._graph[station] = edges
+
+    def get_list_of_possible_edges(self) -> list[_Edge]:
+        """Returns a list of all edges that may be needed to complete this network.
+
+        An edge that may be needed is one where the great circle distance between the two
+        endpoints in less than self.ev_range. This is because a road distance between two
+        charge stations will always be more than a great circle distance between two charge stations.
+
+        Furthermore, edges with unreasonably short distance will not be considered.
+
+        The returned list will have no duplicates in it (and is only a list due to hashing constraints).
+        """
+        result = []
+
+        all_charge_stations = self.charge_stations()
+
+        for i in all_charge_stations:
+            for j in all_charge_stations:
+                if i != j and self.ev_range * 0.6 < calcs.great_circle_distance(i.coord, j.coord) < self.ev_range:
+                    edge = _Edge(i, j)
+                    if edge not in result:
+                        result.append(edge)
+
+        return result
+
+    def load_edges(self, edges: list[_Edge]) -> None:
+        """Takes a list of edges and mutates self by associating each edge with its 2 endpoints.
+
+        Preconditions:
+            - self has no edges in it
+            - all endpoints in all chargers are in self
+        """
+        for edge in edges:
+            if edge.road_distance < self.ev_range:
+                for charge_station in edge.endpoints:
+                    self._graph[charge_station].add(edge)
+
+    def get_shortest_path(self, charger1: ChargeStation, charger2: ChargeStation) -> list[_Edge]:
+        """Return a sequence of charge stations that represent a path from charger1 to charger2
+        in this graph which minimizes the sum of road_distances.
+
+        Preconditions:
+            - charger1 in self._graph
+            - charger2 in self._graph
+        """
+        raise NotImplementedError

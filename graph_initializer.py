@@ -1,5 +1,5 @@
 """TODO"""
-from classes import Car, ChargeNetwork
+from classes import ChargeNetwork, ChargeStation
 import csv
 import datetime
 
@@ -7,7 +7,8 @@ import datetime
 def load_chargers_to_graph(charge_network: ChargeNetwork, filepath: str) -> None:
     """Takes an empty ChargeNetwork object and adds each row of the csv
     at filepath as a charge station as long as it has a sum of at least
-    charge_network.min_chargers_at_station type 2 and type DC chargers.
+    charge_network.min_chargers_at_station type 2 and type DC chargers
+    and is located in mainland North America.
 
     This is a mutating method.
 
@@ -20,55 +21,36 @@ def load_chargers_to_graph(charge_network: ChargeNetwork, filepath: str) -> None
         reader = csv.reader(f)
         next(reader)  # skip the header
         for row in reader:
+            type_2_count = int(row[18]) if row[18] else 0
+            type_dc_count = int(row[19]) if row[19] else 0
 
-            try:
-                type_2_count = int(row[18]) if row[18] else 0
-                type_dc_count = int(row[19]) if row[19] else 0
+            lat = float(row[24])
+            lon = float(row[25])
+            name = row[1]
+            addr = row[2]
+            hours = row[12]
 
-                if type_2_count + type_dc_count >= charge_network.min_chargers_at_station:
+            if type_2_count + type_dc_count >= charge_network.min_chargers_at_station and _in_mainland(lat, lon):
+
+                date = None
+                try:
+                    date = datetime.datetime.strptime(row[32], '%Y-%m-%d').date()
+                except ValueError:
+                    print('skipped this row due to a parsing error')  # strptime error
+
+                if date:
                     new_charger = ChargeStation(
-                        name=str(row[1]),
-                        address=str(row[2]),
-                        hours=str(row[12]),
-                        latitude=float(row[24]),
-                        longitude=float(row[25]),
-                        open_date=datetime.datetime.strptime(row[32], '%Y-%m-%d').date())
+                        name=name,
+                        address=addr,
+                        hours=hours,
+                        latitude=lat,
+                        longitude=lon,
+                        open_date=date)
 
-                    charge_network.add_charge_station(new_charger, None)
-            except Exception:
-                print('skipped this row due to a parsing error')
+                    charge_network.add_charge_station(new_charger, set())
 
 
-
-
-
-
-
-if __name__ == '__main__':
-    from visuals import *
-    import cluster
-
-    m3 = Car('Apache Automotive',
-             'EV Linear Charger',
-             250,
-             lambda start, end: (100 * end) ** 2 - (100 * start) ** 2)
-
-    network = ChargeNetwork(4, m3)
-    load_chargers_to_graph(network, 'cali_subset.csv')
-
-    graph_network(network)
-    print(len(network.charge_stations()))
-
-    tree = cluster.ClusterTree(network.charge_stations(), 20)
-
-    cluster_list = tree.get_list_of_clusters()
-
-    graph_clusters(cluster_list)
-    print(len(cluster_list))
-
-    centroids = tree.get_list_of_final_centroids()
-    simple_network = ChargeNetwork(4, m3)
-    for charger in centroids:
-        simple_network.add_charge_station(charger, None)
-
-    graph_network(simple_network)
+def _in_mainland(lat: float, lon: float) -> bool:
+    """Returns True if the given coordinate is in mainland North America."""
+    # TODO: impliment the func
+    return True
