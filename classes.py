@@ -213,8 +213,9 @@ class ChargeNetwork:
             other_charger = u.get_other_endpoint(charge1)
             if other_charger not in visited:
                 neighbors_path = self.get_shortest_path_helper(other_charger, charge2, visited, new_min)
+                neighbors_path_len = sum([i.road_distance for i in neighbors_path]) + u.road_distance
                 if neighbors_path is not None:
-                    if new_min is None or new_min > len(neighbors_path) + 1:
-                        new_min = len(neighbors_path)
+                    if new_min is None or new_min > neighbors_path_len:
+                        new_min = neighbors_path_len
                         my_output = ([u] + neighbors_path)
         return my_output
