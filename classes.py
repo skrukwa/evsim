@@ -84,6 +84,10 @@ class _Edge:
     def endpoints(self):
         return self._endpoints
 
+    def get_other_endpoint(self, charger: ChargeStation):
+        """Returns the endpoint that isn't the input charger"""
+        return (self._endpoints - {charger}).pop()
+
     def __eq__(self, other: _Edge):
         return self.endpoints == other.endpoints
 
@@ -196,4 +200,21 @@ class ChargeNetwork:
             - charger1 in self._graph
             - charger2 in self._graph
         """
-        raise NotImplementedError
+        return self.get_shortest_path_helper(charger1, charger2, set(), None)
+
+    def get_shortest_path_helper(self, charge1: ChargeStation, charge2: ChargeStation, visited: set[ChargeStation],
+                  min_length: Optional[int]) -> list[_Edge] | None:
+        if charge1 == charge2:
+            return []
+        my_output = None
+        new_min = min_length
+        visited.add(charge1)
+        for u in self.corresponding_edges(charge1):
+            other_charger = u.get_other_endpoint(charge1)
+            if other_charger not in visited:
+                neighbors_path = self.get_shortest_path_helper(other_charger, charge2, visited, new_min)
+                if neighbors_path is not None:
+                    if new_min is None or new_min > len(neighbors_path) + 1:
+                        new_min = len(neighbors_path)
+                        my_output = ([u] + neighbors_path)
+        return my_output
