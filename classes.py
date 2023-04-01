@@ -146,8 +146,9 @@ class ChargeNetwork:
         """Returns a set of edges corresponding to charge_station in the charge network.
 
         Preconditions
-            - charge_station in self._graph"""
-        return {i for i in self._graph[charge_station]}
+            - charge_station in self._graph
+        """
+        return self._graph[charge_station]
 
     def add_charge_station(self, station: ChargeStation, edges: set[_Edge]) -> None:
         """Adds a charge station (and optionally a corresponding set of edges) to the graph.
@@ -203,8 +204,12 @@ class ChargeNetwork:
         """
         return self.get_shortest_path_helper(charger1, charger2, set(), None)
 
-    def get_shortest_path_helper(self, charge1: ChargeStation, charge2: ChargeStation, visited: set[ChargeStation],
-                  min_length: Optional[int]) -> list[_Edge] | None:
+    def get_shortest_path_helper(self,
+                                 charge1: ChargeStation,
+                                 charge2: ChargeStation,
+                                 visited: set[ChargeStation],
+                                 min_length: Optional[int]) -> list[_Edge] | None:
+        """TODO"""
         if charge1 == charge2:
             return []
         my_output = None
@@ -221,11 +226,39 @@ class ChargeNetwork:
                         my_output = ([u] + neighbors_path)
         return my_output
 
+
 if __name__ == '__main__':
+    # RANDOMLY PICK 2 CHARGE POINTS AND FIND THE SHORTEST PATH
     import pickle
+    import datetime
+    import visuals
+
     with open('cali_done.pickle', 'rb') as file:
         obj = pickle.load(file)
-    st = obj.charge_stations()
-    st1 = random.sample(st, 1)[0]
-    st2 = random.sample(st, 1)[0]
-    t = obj.get_shortest_path(st1, st2)
+
+    set_of_chargers = obj.charge_stations()
+    list_of_chargers = list(set_of_chargers)
+    c1, c2 = random.sample(list_of_chargers, 2)
+    print(f'start coord: {c1.coord}')
+    print(f'end coord: {c2.coord}')
+    result = obj.get_shortest_path(c1, c2)
+
+    temp_graph = simplified_network = ChargeNetwork(-1, -1)
+    temp_graph._graph = {
+        ChargeStation('', '', '', 0, 0, datetime.date(2000, 1, 1)): set(result)
+    }
+
+    all_chargers = set()
+    for edge in result:
+        endpoints_iter = iter(edge.endpoints)
+        p1 = next(endpoints_iter)
+        if p1 not in all_chargers:
+            all_chargers.add(p1)
+        p2 = next(endpoints_iter)
+        if p2 not in all_chargers:
+            all_chargers.add(p2)
+
+    for charger in all_chargers:
+        temp_graph.add_charge_station(charger, set())
+
+    visuals.graph_network(temp_graph)
