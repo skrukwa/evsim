@@ -10,9 +10,9 @@ with open('allnomin.pickle', 'rb') as file:
 
 set_of_chargers = obj.charge_stations()
 for charger in set_of_chargers:
-    if charger.coord == (34.065387, -117.212007): # (39.292158, -120.678454):
+    if charger.coord == (44.977425, -64.920852):  # (39.292158, -120.678454):
         c1 = charger
-    elif charger.coord == (36.715623, -121.653963): # (34.517047, -117.313614):
+    elif charger.coord == (41.500545, -95.451628): # (34.517047, -117.313614):
         c2 = charger
 
 """for charger in set_of_chargers:

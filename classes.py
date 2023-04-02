@@ -149,6 +149,15 @@ class ChargeNetwork:
         """
         return self._graph[charge_station]
 
+    def get_hereditary_edges(self, initial: ChargeStation, final: ChargeStation):
+        """
+        Gives a list of edges of initial in order of shortest distance to final.
+        """
+        lst = list(self._graph[initial])
+
+        lst.sort(key=lambda u: calcs.great_circle_distance(u.get_other_endpoint(initial).coord, final.coord))
+        return lst[:5]
+
     def add_charge_station(self, station: ChargeStation, edges: set[_Edge]) -> None:
         """Adds a charge station (and optionally a corresponding set of edges) to the graph.
 
@@ -216,7 +225,8 @@ class ChargeNetwork:
         v2.add(charge1)
         if new_min is not None and new_min <= 0:
             return None
-        for u in self.corresponding_edges(charge1):
+        i = 0
+        for u in self.get_hereditary_edges(charge1, charge2):
             other_charger = u.get_other_endpoint(charge1)
             """if other_charger == charge2:
                 return [u]"""
@@ -225,12 +235,14 @@ class ChargeNetwork:
                     neighbors_path = self.get_shortest_path_helper(other_charger, charge2, v2, new_min -
                                                                    u.road_distance)
                 else:
-                    neighbors_path = self.get_shortest_path_helper(other_charger, charge2, v2, new_min)
+                    neighbors_path = self.get_shortest_path_helper(other_charger, charge2, v2, None)
                 if neighbors_path is not None:
                     neighbors_path_len = sum([i.road_distance for i in neighbors_path]) + u.road_distance
                     if new_min is None or new_min > neighbors_path_len:
+                        i += 1
                         new_min = neighbors_path_len
                         my_output = ([u] + neighbors_path)
+        if i > 0: print(i)
         return my_output
 
 
