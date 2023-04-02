@@ -208,17 +208,27 @@ class ChargeNetwork:
                                  charge1: ChargeStation,
                                  charge2: ChargeStation,
                                  visited: set[ChargeStation],
-                                 min_length: Optional[int]) -> list[_Edge] | None:
+                                 min_length: Optional[float]) -> list[_Edge] | None:
         """TODO"""
         if charge1 == charge2:
             return []
+
         my_output = None
         new_min = min_length
-        visited.add(charge1)
+        v2 = visited.copy()
+        v2.add(charge1)
+        if new_min is not None and new_min <= 0:
+            return None
         for u in self.corresponding_edges(charge1):
             other_charger = u.get_other_endpoint(charge1)
+            """if other_charger == charge2:
+                return [u]"""
             if other_charger not in visited:
-                neighbors_path = self.get_shortest_path_helper(other_charger, charge2, visited, new_min)
+                if new_min is not None:
+                    neighbors_path = self.get_shortest_path_helper(other_charger, charge2, v2, new_min -
+                                                                   u.road_distance)
+                else:
+                    neighbors_path = self.get_shortest_path_helper(other_charger, charge2, v2, new_min)
                 if neighbors_path is not None:
                     neighbors_path_len = sum([i.road_distance for i in neighbors_path]) + u.road_distance
                     if new_min is None or new_min > neighbors_path_len:
