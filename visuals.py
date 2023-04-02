@@ -67,7 +67,7 @@ def graph_network(network: ChargeNetwork) -> None:
             lat=line_latitudes,
             lon=line_longitudes,
             mode='lines',
-            line=dict(width=0.2)
+            line=dict(width=0.2 if len(line_latitudes) > 100 else 1)
         )
     )
 

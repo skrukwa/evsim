@@ -1,4 +1,21 @@
-"""TODO"""
+"""The maps_api.py module of the ev-trip-sim project.
+https://github.com/skrukwa/ev-trip-sim
+
+Description
+===========
+
+This module is responsible for interacting with the Google Maps Distance API
+using the googlemaps library in order to mutate edges.
+
+Copyright and Usage Information
+===============================
+
+This file is distributed under the ev-trip-sim project which is
+bounded by the terms of Apache License Version 2.0. For more
+information, please follow the github link above.
+
+This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
+"""
 from classes import _Edge
 import googlemaps
 

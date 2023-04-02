@@ -22,7 +22,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
 import calcs
-import random
+import datetime
 
 
 @dataclass(frozen=True)
@@ -149,15 +149,6 @@ class ChargeNetwork:
         """
         return self._graph[charge_station]
 
-    def get_hereditary_edges(self, initial: ChargeStation, final: ChargeStation):
-        """
-        Gives a list of edges of initial in order of shortest distance to final.
-        """
-        lst = list(self._graph[initial])
-
-        lst.sort(key=lambda u: calcs.great_circle_distance(u.get_other_endpoint(initial).coord, final.coord))
-        return lst[:5]
-
     def add_charge_station(self, station: ChargeStation, edges: set[_Edge]) -> None:
         """Adds a charge station (and optionally a corresponding set of edges) to the graph.
 
@@ -200,7 +191,16 @@ class ChargeNetwork:
                 for charge_station in edge.endpoints:
                     self._graph[charge_station].add(edge)
 
-    def get_shortest_path(self, charger1: ChargeStation, charger2: ChargeStation) -> list[_Edge]:
+    def get_hereditary_edges(self, initial: ChargeStation, final: ChargeStation) -> list[_Edge]:
+        """
+        Gives a list of edges of initial in order of the shortest distance to final.
+        """
+        lst = list(self._graph[initial])
+
+        lst.sort(key=lambda u: calcs.great_circle_distance(u.get_other_endpoint(initial).coord, final.coord))
+        return lst[:2]
+
+    def get_shortest_path(self, charger1: ChargeStation, charger2: ChargeStation) -> Optional[list[_Edge]]:
         """Return a sequence of charge stations that represent a path from charger1 to charger2
         in this graph which minimizes the sum of road_distances.
 
@@ -214,7 +214,7 @@ class ChargeNetwork:
                                  charge1: ChargeStation,
                                  charge2: ChargeStation,
                                  visited: set[ChargeStation],
-                                 min_length: Optional[float]) -> list[_Edge] | None:
+                                 min_length: Optional[float]) -> Optional[list[_Edge]]:
         """Finds the charger"""
         if charge1 == charge2:
             return []
@@ -225,59 +225,18 @@ class ChargeNetwork:
         v2.add(charge1)
         if new_min is not None and new_min <= 0:
             return None
-        i = 0
         for u in self.get_hereditary_edges(charge1, charge2):
             other_charger = u.get_other_endpoint(charge1)
-            """if other_charger == charge2:
-                return [u]"""
             if other_charger not in visited:
                 if new_min is not None:
-                    neighbors_path = self.get_shortest_path_helper(other_charger, charge2, v2, new_min -
-                                                                   u.road_distance)
+                    neighbors_path = self.get_shortest_path_helper(
+                        other_charger, charge2, v2, new_min - u.time
+                    )
                 else:
                     neighbors_path = self.get_shortest_path_helper(other_charger, charge2, v2, None)
                 if neighbors_path is not None:
-                    neighbors_path_len = sum([i.road_distance for i in neighbors_path]) + u.road_distance
+                    neighbors_path_len = sum([i.time for i in neighbors_path]) + u.time
                     if new_min is None or new_min > neighbors_path_len:
-                        i += 1
                         new_min = neighbors_path_len
                         my_output = ([u] + neighbors_path)
-        if i > 0: print(i)
         return my_output
-
-
-if __name__ == '__main__':
-    # RANDOMLY PICK 2 CHARGE POINTS AND FIND THE SHORTEST PATH
-    import pickle
-    import datetime
-    import visuals
-
-    with open('allnomin.pickle', 'rb') as file:
-        obj = pickle.load(file)
-
-    set_of_chargers = obj.charge_stations()
-    list_of_chargers = list(set_of_chargers)
-    c1, c2 = random.sample(list_of_chargers, 2)
-    print(f'start coord: {c1.coord}')
-    print(f'end coord: {c2.coord}')
-    result = obj.get_shortest_path(c1, c2)
-
-    temp_graph = simplified_network = ChargeNetwork(-1, -1)
-    temp_graph._graph = {
-        ChargeStation('', '', '', 0, 0, datetime.date(2000, 1, 1)): set(result)
-    }
-
-    all_chargers = set()
-    for edge in result:
-        endpoints_iter = iter(edge.endpoints)
-        p1 = next(endpoints_iter)
-        if p1 not in all_chargers:
-            all_chargers.add(p1)
-        p2 = next(endpoints_iter)
-        if p2 not in all_chargers:
-            all_chargers.add(p2)
-
-    for charger in all_chargers:
-        temp_graph.add_charge_station(charger, set())
-
-    visuals.graph_network(temp_graph)

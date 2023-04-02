@@ -1,4 +1,22 @@
-"""TODO"""
+"""The cluster.py module of the ev-trip-sim project.
+https://github.com/skrukwa/ev-trip-sim
+
+Description
+===========
+
+This module is responsible for creating Divisive Hierarchical Clustering trees containing charge stations.
+
+https://en.wikipedia.org/wiki/Hierarchical_clustering
+
+Copyright and Usage Information
+===============================
+
+This file is distributed under the ev-trip-sim project which is
+bounded by the terms of Apache License Version 2.0. For more
+information, please follow the github link above.
+
+This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
+"""
 from __future__ import annotations
 from classes import ChargeStation
 import calcs

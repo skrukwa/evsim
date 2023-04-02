@@ -1,8 +1,24 @@
-"""TODO"""
+"""The graph_initializer.py module of the ev-trip-sim project.
+https://github.com/skrukwa/ev-trip-sim
+
+Description
+===========
+
+This module is responsible for creating charge network graphs from csv dataset files.
+
+Copyright and Usage Information
+===============================
+
+This file is distributed under the ev-trip-sim project which is
+bounded by the terms of Apache License Version 2.0. For more
+information, please follow the github link above.
+
+This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
+"""
 from classes import ChargeNetwork, ChargeStation
 import csv
 import datetime
-from shapely.geometry import Point  # todo add shapely to requirements.txt
+from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
 
 
