@@ -5,7 +5,7 @@ import pickle
 import datetime
 import visuals
 
-with open('cali_done.pickle', 'rb') as file:
+with open('allnomin.pickle', 'rb') as file:
     obj = pickle.load(file)
 
 set_of_chargers = obj.charge_stations()

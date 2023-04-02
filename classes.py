@@ -21,7 +21,6 @@ This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Optional
-import datetime
 import calcs
 import random
 
@@ -165,8 +164,6 @@ class ChargeNetwork:
         endpoints in less than self.ev_range. This is because a road distance between two
         charge stations will always be more than a great circle distance between two charge stations.
 
-        Furthermore, edges with unreasonably short distance will not be considered.
-
         The returned list will have no duplicates in it (and is only a list due to hashing constraints).
         """
         result = []
@@ -175,7 +172,7 @@ class ChargeNetwork:
 
         for i in all_charge_stations:
             for j in all_charge_stations:
-                if i != j and self.ev_range * 0.6 < calcs.great_circle_distance(i.coord, j.coord) < self.ev_range:
+                if i != j and calcs.great_circle_distance(i.coord, j.coord) < self.ev_range:
                     edge = _Edge(i, j)
                     if edge not in result:
                         result.append(edge)
@@ -243,7 +240,7 @@ if __name__ == '__main__':
     import datetime
     import visuals
 
-    with open('cali_done.pickle', 'rb') as file:
+    with open('allnomin.pickle', 'rb') as file:
         obj = pickle.load(file)
 
     set_of_chargers = obj.charge_stations()

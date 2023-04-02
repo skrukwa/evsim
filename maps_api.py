@@ -44,11 +44,15 @@ def _mutate_edge(edge: _Edge, gmaps: googlemaps.client.Client) -> bool:
 
     try:
         response = gmaps.directions(p1, p2)
+        road_distance = response[0]['legs'][0]['distance']['value'] / 1000
+        time = response[0]['legs'][0]['duration']['value']
+
+        assert isinstance(road_distance, float)
+        assert isinstance(time, int)
+
     except Exception:
         return False
 
-    road_distance = response[0]['legs'][0]['distance']['value'] / 1000
-    time = response[0]['legs'][0]['duration']['value']
     edge.road_distance = road_distance
     edge.time = time
 

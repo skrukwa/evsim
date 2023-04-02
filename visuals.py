@@ -66,7 +66,8 @@ def graph_network(network: ChargeNetwork) -> None:
         go.Scattergeo(
             lat=line_latitudes,
             lon=line_longitudes,
-            mode='lines'
+            mode='lines',
+            line=dict(width=0.2)
         )
     )
 

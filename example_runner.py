@@ -17,17 +17,22 @@ import maps_api
 import pickle
 from classes import ChargeNetwork
 
+CAR_RANGE = 500             # TODO
+MIN_CHARGERS = 4            # TODO
+MIN_CLUSTER_DIAMETER = 65   # TODO
+DATA_FILE = 'all_data.csv'  # TODO
+
 # STEP 1. INITIALIZE GRAPH WITH DATA
 
-network = ChargeNetwork(4, 500)
-graph_initializer.load_chargers_to_graph(network, 'cali_subset.csv')
+network = ChargeNetwork(MIN_CHARGERS, CAR_RANGE)
+graph_initializer.load_chargers_to_graph(network, DATA_FILE)
 
 visuals.graph_network(network)
 print(len(network.charge_stations()))
 
 # STEP 2. MAKE A CLUSTER TREE BASED OF THE FIRST GRAPH
 
-tree = cluster.ClusterTree(network.charge_stations(), 40)
+tree = cluster.ClusterTree(network.charge_stations(), MIN_CLUSTER_DIAMETER)
 cluster_list = tree.get_list_of_clusters()
 
 visuals.graph_clusters(cluster_list)
@@ -37,7 +42,7 @@ print(len(cluster_list))
 
 centroids = tree.get_list_of_final_centroids()
 
-simplified_network = ChargeNetwork(4, 500)
+simplified_network = ChargeNetwork(MIN_CHARGERS, CAR_RANGE)
 for charger in centroids:
     simplified_network.add_charge_station(charger, set())
 visuals.graph_network(simplified_network)
