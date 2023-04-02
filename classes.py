@@ -215,7 +215,7 @@ class ChargeNetwork:
                                  charge2: ChargeStation,
                                  visited: set[ChargeStation],
                                  min_length: Optional[float]) -> list[_Edge] | None:
-        """TODO"""
+        """Finds the charger"""
         if charge1 == charge2:
             return []
 
