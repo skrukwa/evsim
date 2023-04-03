@@ -18,8 +18,9 @@ information, please follow the github link above.
 This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
 """
 from __future__ import annotations
-from classes import ChargeStation
+
 import calcs
+from classes import ChargeStation
 
 
 class ClusterTree:
@@ -146,3 +147,14 @@ class ClusterTree:
             for child in self._subclusters:
                 result.extend(child.get_list_of_final_centroids())
             return result
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
+
+    import python_ta
+    python_ta.check_all(config={
+        'max-line-length': 120,
+        'disable': ['forbidden-import']
+    })

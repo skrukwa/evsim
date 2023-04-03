@@ -16,8 +16,9 @@ information, please follow the github link above.
 
 This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
 """
-from classes import _Edge
 import googlemaps
+
+from classes import _Edge
 
 
 def mutate_edges(edges: list[_Edge], gmaps: googlemaps.client.Client) -> list[_Edge]:
@@ -67,10 +68,22 @@ def _mutate_edge(edge: _Edge, gmaps: googlemaps.client.Client) -> bool:
         assert isinstance(road_distance, float)
         assert isinstance(time, int)
 
-    except Exception:
+    except Exception:  # TODO: implement better error handling
         return False
 
     edge.road_distance = road_distance
     edge.time = time
 
     return True
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
+
+    import python_ta
+    python_ta.check_all(config={
+        'max-line-length': 120,
+        'disable': ['forbidden-import', 'forbidden-IO-function',
+                    'broad-except', 'fixme']
+    })

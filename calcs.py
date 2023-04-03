@@ -16,8 +16,8 @@ information, please follow the github link above.
 
 This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
 """
-from typing import Callable, Any
 import math
+from typing import Callable, Any
 
 
 def find_lowest_average_distance(points: set[Any],
@@ -113,3 +113,14 @@ def great_circle_distance(p1: tuple[float, float], p2: tuple[float, float]) -> f
 def _hav(num: float) -> float:
     """Returns the haversine of the number."""
     return math.sin(num / 2) ** 2
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
+
+    import python_ta
+    python_ta.check_all(config={
+        'max-line-length': 120,
+        'disable': ['forbidden-import']
+    })

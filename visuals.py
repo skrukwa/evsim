@@ -15,8 +15,9 @@ information, please follow the github link above.
 
 This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
 """
-from classes import ChargeNetwork, ChargeStation
 import plotly.graph_objects as go
+
+from classes import ChargeNetwork, ChargeStation
 
 
 def graph_network(network: ChargeNetwork) -> None:
@@ -132,3 +133,14 @@ def graph_clusters(clusters: list[list[ChargeStation]]) -> None:
     )
 
     fig.show()
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
+
+    import python_ta
+    python_ta.check_all(config={
+        'max-line-length': 120,
+        'disable': ['forbidden-import']
+    })

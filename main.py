@@ -16,16 +16,18 @@ information, please follow the github link above.
 
 This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
 """
-import calcs
-import graph_initializer
-import visuals
-import cluster
-import googlemaps
-import maps_api
-import pickle
-from typing import Optional
-import random
 import datetime
+import pickle
+import random
+from typing import Optional
+
+import googlemaps
+
+import calcs
+import cluster
+import graph_initializer
+import maps_api
+import visuals
 from classes import ChargeNetwork, ChargeStation
 
 
@@ -92,7 +94,7 @@ def make_network(data_file: str, min_chargers: int, cluster_diameter: int, car_r
 
 def get_path(network_pickle_file: str,
              coord1: Optional[tuple[float, float]] = None,
-             coord2: Optional[tuple[float, float]] = None):
+             coord2: Optional[tuple[float, float]] = None) -> None:
     """Finds the closest charge stations to coord1 and coord2 in the given network and
     then calculates and visualizes the shortest path.
 
@@ -104,8 +106,8 @@ def get_path(network_pickle_file: str,
         - (coord1 is None and coord2 is None) or (coord1 is not None and coord2 is not None)
     """
     with open(network_pickle_file, 'rb') as file:
-        network = pickle.load(file)
-        set_of_chargers = network.charge_stations()
+        net = pickle.load(file)
+        set_of_chargers = net.charge_stations()
         list_of_chargers = list(set_of_chargers)
 
     if coord1 is None and coord2 is None:
@@ -122,7 +124,7 @@ def get_path(network_pickle_file: str,
 
     # FIND SHORTEST PATH
 
-    result = network.get_shortest_path(c1, c2)
+    result = net.get_shortest_path(c1, c2)
     print(' ')
     print(f'start coord: {c1.coord}')
     print(f'start name: {c1.name}')
@@ -136,15 +138,13 @@ def get_path(network_pickle_file: str,
     print(f'end hours: {c2.hours}')
     print(f'end open date: {c2.open_date}')
     print(' ')
-    print(f'total path length: {sum(edge.road_distance for edge in result)} km')
-    print(f'total path duration: {datetime.timedelta(seconds=sum(edge.time for edge in result))}')
+    print(f'total path length: {sum(e.road_distance for e in result)} km')
+    print(f'total path duration: {datetime.timedelta(seconds=sum(e.time for e in result))}')
 
     # VISUALIZE THE PATH
 
     temp_graph = ChargeNetwork(-1, -1)
-    temp_graph._graph = {
-        ChargeStation('', '', '', 0, 0, datetime.date(2000, 1, 1)): set(result)
-    }
+    temp_graph.add_charge_station(ChargeStation('', '', '', 0, 0, datetime.date(2000, 1, 1)), set(result))
 
     all_chargers = set()
     for edge in result:
@@ -163,6 +163,14 @@ def get_path(network_pickle_file: str,
 
 
 if __name__ == '__main__':
+    # import doctest
+    # doctest.testmod()
+    #
+    # import python_ta
+    # python_ta.check_all(config={
+    #     'max-line-length': 120,
+    #     'disable': ['forbidden-import', 'forbidden-IO-function', 'possibly-undefined', 'too-many-locals']
+    # })
 
     print('options:')
     print('1. make your own smaller network')
@@ -180,8 +188,8 @@ if __name__ == '__main__':
 
     elif choice == '2':
         # visualize the full network we made
-        with open('full_network.pickle', 'rb') as file:
-            network = pickle.load(file)
+        with open('full_network.pickle', 'rb') as pickle_file:
+            network = pickle.load(pickle_file)
         visuals.graph_network(network)
 
     elif choice == '3':

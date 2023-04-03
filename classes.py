@@ -19,10 +19,12 @@ information, please follow the github link above.
 This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
 """
 from __future__ import annotations
+
+import datetime
 from dataclasses import dataclass
 from typing import Optional
+
 import calcs
-import datetime
 
 
 @dataclass(frozen=True)
@@ -47,7 +49,8 @@ class ChargeStation:
     open_date: datetime.date
 
     @property
-    def coord(self):
+    def coord(self) -> tuple[float, float]:
+        """Returns the latitude, longitude pair of this charge station"""
         return self.latitude, self.longitude
 
 
@@ -81,17 +84,20 @@ class _Edge:
         self.time = time
 
     @property
-    def endpoints(self):
+    def endpoints(self) -> set[ChargeStation]:
+        """A getter for self.endpoints."""
         return self._endpoints
 
-    def get_other_endpoint(self, charger: ChargeStation):
+    def get_other_endpoint(self, charger: ChargeStation) -> ChargeStation:
         """Returns the endpoint that isn't the input charger"""
         return (self._endpoints - {charger}).pop()
 
-    def __eq__(self, other: _Edge):
+    def __eq__(self, other: _Edge) -> bool:
+        """Return equality (based on endpoints) between self and other."""
         return self.endpoints == other.endpoints
 
-    def __hash__(self):
+    def __hash__(self) -> int:
+        """Return the hash value."""
         coords = [charger.coord for charger in self.endpoints]
         coords.sort()
         return hash((self.__class__, coords[0], coords[1]))
@@ -113,24 +119,24 @@ class ChargeNetwork:
     """
     # Private Instance Attributes:
     #   - _graph: a dict of charge stations and corresponding edges
-    _ev_range: int
     _min_chargers_at_station: int
+    _ev_range: int
     _graph: dict[ChargeStation, set[_Edge]]
 
-    def __init__(self, min_chargers_at_station, car) -> None:
+    def __init__(self, min_chargers_at_station: int, ev_range: int) -> None:
         """Initialize an empty graph."""
         self._min_chargers_at_station = min_chargers_at_station
-        self._ev_range = car
+        self._ev_range = ev_range
         self._graph = {}
 
     @property
     def min_chargers_at_station(self) -> int:
-        """An immutable getter for self._min_chargers_at_station."""
+        """A getter for self._min_chargers_at_station."""
         return self._min_chargers_at_station
 
     @property
     def ev_range(self) -> int:
-        """An immutable getter for self._ev_range."""
+        """A getter for self._ev_range."""
         return self._ev_range
 
     def is_empty(self) -> bool:
@@ -141,7 +147,7 @@ class ChargeNetwork:
         """Returns a set of charge stations in the charge network."""
         return set(self._graph.keys())
 
-    def corresponding_edges(self, charge_station) -> set[_Edge]:
+    def corresponding_edges(self, charge_station: ChargeStation) -> set[_Edge]:
         """Returns a set of edges corresponding to charge_station in the charge network.
 
         Preconditions
@@ -191,9 +197,12 @@ class ChargeNetwork:
                 for charge_station in edge.endpoints:
                     self._graph[charge_station].add(edge)
 
+    # THE REST OF THE CODE IS SHORTEST WEIGHTED PATH FINDING
+
     def get_hereditary_edges(self, initial: ChargeStation, final: ChargeStation) -> list[_Edge]:
-        """
-        Gives a list of edges of initial in order of the shortest distance to final.
+        """Orders and slices the given list of charge stations based on great circle distance to the destination.
+
+        Used in a greedy path finding implementation to reduce number of paths which need to be checked.
         """
         lst = list(self._graph[initial])
 
@@ -201,8 +210,8 @@ class ChargeNetwork:
         return lst[:2]
 
     def get_shortest_path(self, charger1: ChargeStation, charger2: ChargeStation) -> Optional[list[_Edge]]:
-        """Return a sequence of charge stations that represent a path from charger1 to charger2
-        in this graph which minimizes the sum of road_distances.
+        """Return a sequence of edges that represent a path from charger1 to charger2
+        in this graph which minimizes the total travel time, or None if no path is found.
 
         Preconditions:
             - charger1 in self._graph
@@ -215,7 +224,7 @@ class ChargeNetwork:
                                  charge2: ChargeStation,
                                  visited: set[ChargeStation],
                                  min_length: Optional[float]) -> Optional[list[_Edge]]:
-        """Finds the charger"""
+        """Recursive helper for the get_shortest_path method."""
         if charge1 == charge2:
             return []
 
@@ -240,3 +249,14 @@ class ChargeNetwork:
                         new_min = neighbors_path_len
                         my_output = ([u] + neighbors_path)
         return my_output
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
+
+    import python_ta
+    python_ta.check_all(config={
+        'max-line-length': 120,
+        'disable': ['forbidden-import', 'too-many-nested-blocks']
+    })

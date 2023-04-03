@@ -15,11 +15,13 @@ information, please follow the github link above.
 
 This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
 """
-from classes import ChargeNetwork, ChargeStation
 import csv
 import datetime
+
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
+
+from classes import ChargeNetwork, ChargeStation
 
 
 def load_chargers_to_graph(charge_network: ChargeNetwork, filepath: str) -> None:
@@ -80,3 +82,14 @@ def _in_mainland(lat: float, lon: float) -> bool:
     point = Point(lat, lon)
     north_america_polygon = Polygon([(52, -170), (71, -166), (46, -48), (24, -80), (24, -120)])
     return north_america_polygon.contains(point)
+
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
+
+    import python_ta
+    python_ta.check_all(config={
+        'max-line-length': 120,
+        'disable': ['forbidden-import', 'forbidden-IO-function']
+    })
