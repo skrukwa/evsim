@@ -138,6 +138,9 @@ def get_path(network_pickle_file: str,
     print(f'end hours: {c2.hours}')
     print(f'end open date: {c2.open_date}')
     print(' ')
+    if not result:
+        print('no path found')
+        return
     print(f'total path length: {sum(e.road_distance for e in result)} km')
     print(f'total path duration: {datetime.timedelta(seconds=sum(e.time for e in result))}')
 
