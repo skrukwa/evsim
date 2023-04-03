@@ -166,11 +166,11 @@ if __name__ == '__main__':
     # import doctest
     # doctest.testmod()
     #
-    import python_ta
-    python_ta.check_all(config={
-        'max-line-length': 120,
-        'disable': ['forbidden-import', 'forbidden-IO-function', 'possibly-undefined', 'too-many-locals']
-    })
+    # import python_ta
+    # python_ta.check_all(config={
+    #     'max-line-length': 120,
+    #     'disable': ['forbidden-import', 'forbidden-IO-function', 'possibly-undefined', 'too-many-locals']
+    # })
 
     print('options:')
     print('1. make your own smaller network')
