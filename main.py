@@ -81,8 +81,8 @@ def make_network(data_file: str, min_chargers: int, cluster_diameter: int, car_r
     # STEP 4. ADD EDGES TO THE NEW GRAPH USING GOOGLEMAPS API
 
     possible_edges = simplified_network.get_list_of_possible_edges()
-    gmaps = googlemaps.Client(key=input('what is your google maps api key'))
-    out_file = input('what should the name of the output file be (for example: output.pickle)')
+    gmaps = googlemaps.Client(key=input('what is your google maps api key: '))
+    out_file = input('what should the name of the output file be (for example: output.pickle): ')
     finished_edges = maps_api.mutate_edges(possible_edges, gmaps)
     simplified_network.load_edges(finished_edges)
 
@@ -177,7 +177,7 @@ if __name__ == '__main__':
     print('2. visualize the full network we made')
     print('3. use the full network to get a path from florida to bc')
     print('4. use the full network to get a random path')
-    choice = input('please input your choice (1/2/3/4)')
+    choice = input('please input your choice (1/2/3/4): ')
 
     if choice == '1':
         # make your own smaller network

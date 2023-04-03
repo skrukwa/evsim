@@ -33,7 +33,7 @@ def mutate_edges(edges: list[_Edge], gmaps: googlemaps.client.Client) -> list[_E
         - all(edge.road_distance is None for edge in edges)
         - all(edge.time is None for edge in edges)
     """
-    if input(f'you are about to make {len(edges)} calls to the provided client (Y/N)') == 'Y':
+    if input(f'you are about to make {len(edges)} calls to the provided client (Y/N): ') == 'Y':
         result = []
         for edge in edges:
             if _mutate_edge(edge, gmaps):
