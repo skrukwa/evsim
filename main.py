@@ -166,23 +166,19 @@ if __name__ == '__main__':
     # import doctest
     # doctest.testmod()
     #
-    # import python_ta
-    # python_ta.check_all(config={
-    #     'max-line-length': 120,
-    #     'disable': ['forbidden-import', 'forbidden-IO-function', 'possibly-undefined', 'too-many-locals']
-    # })
+    import python_ta
+    python_ta.check_all(config={
+        'max-line-length': 120,
+        'disable': ['forbidden-import', 'forbidden-IO-function', 'possibly-undefined', 'too-many-locals']
+    })
 
     print('options:')
     print('1. make your own smaller network')
     print('2. visualize the full network we made')
     print('3. use the full network to get a path from florida to bc')
     print('4. use the full network to get a random path')
-<<<<<<< Updated upstream
-    choice = input('please input your choice (1/2/3/4): ')
-=======
     print('5. use the full network to get a specified path by snapping given coords to charge stations')
-    choice = input('please input your choice (1/2/3/4)')
->>>>>>> Stashed changes
+    choice = input('please input your choice (1/2/3/4/5): ')
 
     if choice == '1':
         # make your own smaller network
@@ -210,9 +206,9 @@ if __name__ == '__main__':
     elif choice == '5':
         # use the full network to get a specified path
         # snap the given coordinates to the closest charge stations in the network
-        c1 = (float(input('coord 1 lat:')), float(input('coord 1 lon')))
-        c2 = (float(input('coord 2 lat:')), float(input('coord 2 lon')))
-        get_path('full_network.pickle', c1, c2)
+        input_c1 = (float(input('coord 1 lat: ')), float(input('coord 1 lon: ')))
+        input_c2 = (float(input('coord 2 lat: ')), float(input('coord 2 lon: ')))
+        get_path('full_network.pickle', input_c1, input_c2)
 
     else:
         raise TypeError
