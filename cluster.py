@@ -1,30 +1,16 @@
-"""The cluster.py module of the ev-trip-sim project.
-https://github.com/skrukwa/ev-trip-sim
-
-Description
-===========
-
-This module is responsible for creating Divisive Hierarchical Clustering trees containing charge stations.
-
-https://en.wikipedia.org/wiki/Hierarchical_clustering
-
-Copyright and Usage Information
-===============================
-
-This file is distributed under the ev-trip-sim project which is
-bounded by the terms of Apache License Version 2.0. For more
-information, please follow the github link above.
-
-This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
 """
-from __future__ import annotations
+----------Objectives----------
+Create a Divisive Hierarchical Clustering tree containing charge stations.
+"""
+from typing import Self
 
 import calcs
 from classes import ChargeStation
 
 
 class ClusterTree:
-    """A recursive Divisive Hierarchical Clustering tree which clusters charge stations until
+    """
+    A recursive Divisive Hierarchical Clustering tree which clusters charge stations until
     each cluster has a diameter less than max_cluster_diameter.
 
     After being fully initialized,
@@ -43,11 +29,12 @@ class ClusterTree:
         - _max_cluster_diameter >= 0
     """
     _centroid: ChargeStation
-    _subclusters: set[ClusterTree | ChargeStation]
+    _subclusters: set[Self | ChargeStation]
     _max_cluster_diameter: float
 
-    def __init__(self, charge_stations: set[ChargeStation], distance: float) -> None:
-        """Recursively initialize the tree using Divisive Hierarchical Clustering as referenced below.
+    def __init__(self, charge_stations: set[ChargeStation], max_cluster_diameter: float) -> None:
+        """
+        Recursively initialize the tree using Divisive Hierarchical Clustering as referenced below.
 
         https://en.wikipedia.org/wiki/Hierarchical_clustering
 
@@ -55,7 +42,7 @@ class ClusterTree:
 
         STEP 1.
         Assign the root as one charge station which represents the cluster of all charge stations given
-        (and all charge stations below it in the tree) using by minimizing the average distance to all
+        (and all charge stations below it in the tree) by minimizing the average distance to all
         other charge stations.
 
         STEP 2.
@@ -71,7 +58,7 @@ class ClusterTree:
         Preconditions:
             - len(charge_stations) >= 1
         """
-        self._max_cluster_diameter = distance
+        self._max_cluster_diameter = max_cluster_diameter
 
         # STEP 1. assign _centroid to be the charge station with the lowest average distance
         #         to all charge stations it represents
@@ -105,8 +92,8 @@ class ClusterTree:
                     new_cluster2.add(charge_station)
 
             self._subclusters = {
-                ClusterTree(new_cluster1, distance),
-                ClusterTree(new_cluster2, distance)
+                ClusterTree(new_cluster1, max_cluster_diameter),
+                ClusterTree(new_cluster2, max_cluster_diameter)
             }
 
     @property
@@ -115,14 +102,16 @@ class ClusterTree:
         return self._max_cluster_diameter
 
     def get_list_of_clusters(self) -> list[list[ChargeStation]]:
-        """Returns a list of clusters of charge stations by traversing the
-        tree in order to accumulate all groups of leafs."""
+        """
+        Returns a list of clusters of charge stations by traversing the
+        tree in order to accumulate all groups of leafs.
+        """
 
         assert self._subclusters  # we should not have recursed into leafs
 
         random_child = next(iter(self._subclusters))
 
-        if isinstance(random_child, ChargeStation):  # the child is a leaf, so in this tree, all childern are leafs
+        if isinstance(random_child, ChargeStation):  # the child is a leaf, so in this tree, all children are leafs
             return [list(self._subclusters)]
 
         else:  # the child is not a leaf, so in this tree, all children are not leafs
@@ -132,14 +121,16 @@ class ClusterTree:
             return result
 
     def get_list_of_final_centroids(self) -> list[ChargeStation]:
-        """Returns a list of charge stations which are the centroids representing the clusters
-        of charge stations by traversing the tree in order to accumulate all parents of groups of leafs."""
+        """
+        Returns a list of charge stations which are the centroids representing the clusters
+        of charge stations by traversing the tree in order to accumulate all parents of groups of leafs.
+        """
 
         assert self._subclusters  # we should not have recursed into leafs
 
         random_child = next(iter(self._subclusters))
 
-        if isinstance(random_child, ChargeStation):  # the child is a leaf, so in this tree, all childern are leafs
+        if isinstance(random_child, ChargeStation):  # the child is a leaf, so in this tree, all children are leafs
             return [self._centroid]
 
         else:  # the child is not a leaf, so in this tree, all children are not leafs
@@ -147,14 +138,3 @@ class ClusterTree:
             for child in self._subclusters:
                 result.extend(child.get_list_of_final_centroids())
             return result
-
-
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
-
-    import python_ta
-    python_ta.check_all(config={
-        'max-line-length': 120,
-        'disable': ['forbidden-import']
-    })

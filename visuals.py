@@ -1,19 +1,6 @@
-"""The visuals.py module of the ev-trip-sim project.
-https://github.com/skrukwa/ev-trip-sim
-
-Description
-===========
-
-This module is responsible for various visualization functions.
-
-Copyright and Usage Information
-===============================
-
-This file is distributed under the ev-trip-sim project which is
-bounded by the terms of Apache License Version 2.0. For more
-information, please follow the github link above.
-
-This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
+"""
+----------Objectives----------
+Visualize ChargeNetwork objects (including those just representing a path) and cluster trees.
 """
 import plotly.graph_objects as go
 
@@ -133,14 +120,3 @@ def graph_clusters(clusters: list[list[ChargeStation]]) -> None:
     )
 
     fig.show()
-
-
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
-
-    import python_ta
-    python_ta.check_all(config={
-        'max-line-length': 120,
-        'disable': ['forbidden-import']
-    })

@@ -1,4 +1,0 @@
-googlemaps==4.10.0
-plotly==5.14.0
-python_ta==2.4.2
-shapely==2.0.1

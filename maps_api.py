@@ -1,52 +1,48 @@
-"""The maps_api.py module of the ev-trip-sim project.
-https://github.com/skrukwa/ev-trip-sim
+"""
+----------Objectives----------
+Use Google Maps Distance API via googlemaps library in order to mutate edges.
 
-Description
-===========
-
-This module is responsible for interacting with the Google Maps Distance API
-using the googlemaps library in order to mutate edges.
-
-Copyright and Usage Information
-===============================
-
-This file is distributed under the ev-trip-sim project which is
-bounded by the terms of Apache License Version 2.0. For more
-information, please follow the github link above.
-
-This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
+----------Resources used----------
+https://github.com/googlemaps/google-maps-services-python
 """
 import googlemaps
 
 from classes import _Edge
 
 
-def mutate_edges(edges: list[_Edge], gmaps: googlemaps.client.Client) -> list[_Edge]:
-    """Takes a list of incomplete edges and returns a new list of edges completed by making calls
+def mutate_edges(edges: set[_Edge], gmaps: googlemaps.client.Client) -> None:
+    """
+    Takes a set of incomplete edges and returns a new set of edges completed by making calls
     to the given googlemaps client. Any failed calls will result in the edge being discarded.
 
     Note that normally, there are no failed calls.
 
     Prints a verbose summary.
 
+    This is a mutating method.
+
     Preconditions:
         - all(edge.road_distance is None for edge in edges)
         - all(edge.time is None for edge in edges)
     """
+    org_len_edges = len(edges)
+    failed_edges = set()
     if input(f'you are about to make {len(edges)} calls to the provided client (Y/N): ') == 'Y':
-        result = []
         for edge in edges:
-            if _mutate_edge(edge, gmaps):
-                result.append(edge)
+            if not _mutate_edge(edge, gmaps):
+                failed_edges.add(edge)
 
-        print(f'successfully completed {len(result)}/{len(edges)} edges')
-        return result
+        for edge in failed_edges:
+            edges.remove(edge)
+
+        print(f'successfully completed {len(edges)}/{org_len_edges} edges')
     else:
         raise KeyboardInterrupt
 
 
 def _mutate_edge(edge: _Edge, gmaps: googlemaps.client.Client) -> bool:
-    """Takes an incomplete edge and completes it by making a call to the given googlemaps client.
+    """
+    Takes an incomplete edge and completes it by making a call to the given googlemaps client.
 
     Returns True if successful and mutated, or False if unsuccessful and no mutations made.
 
@@ -75,15 +71,3 @@ def _mutate_edge(edge: _Edge, gmaps: googlemaps.client.Client) -> bool:
     edge.time = time
 
     return True
-
-
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
-
-    import python_ta
-    python_ta.check_all(config={
-        'max-line-length': 120,
-        'disable': ['forbidden-import', 'forbidden-IO-function',
-                    'broad-except', 'fixme']
-    })

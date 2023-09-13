@@ -1,20 +1,6 @@
-"""The calcs.py module of the ev-trip-sim project.
-https://github.com/skrukwa/ev-trip-sim
-
-Description
-===========
-
-This module is a more abstracted file containing generalized calculation methods,
-most of which can be called with custom keys.
-
-Copyright and Usage Information
-===============================
-
-This file is distributed under the ev-trip-sim project which is
-bounded by the terms of Apache License Version 2.0. For more
-information, please follow the github link above.
-
-This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
+"""
+----------Objectives----------
+Define generalized calculation functions.
 """
 import math
 from typing import Callable, Any
@@ -23,7 +9,8 @@ from typing import Callable, Any
 def find_lowest_average_distance(points: set[Any],
                                  distance_func: Callable = math.dist,
                                  coords_key: Callable = lambda x: (x[0], x[1])) -> Any:
-    """Returns a point such that the average distance between it and every other point is minimised.
+    """
+    Returns a point such that the average distance between it and every other point is minimised.
 
     Takes an optional distance parameter that calculates the distance between two coordinates,
     which defaults to calculating euclidean distances.
@@ -54,7 +41,8 @@ def find_lowest_average_distance(points: set[Any],
 def find_furthest_apart(points: set[Any],
                         distance_func: Callable = math.dist,
                         coords_key: Callable = lambda x: (x[0], x[1])) -> tuple:
-    """Returns two points such that the distance between them is maximised.
+    """
+    Returns two points such that the distance between them is maximised.
 
     Takes an optional distance parameter that calculates the distance between two coordinates.
     If no such parameter is provided, euclidean distances are used.
@@ -81,7 +69,8 @@ def find_furthest_apart(points: set[Any],
 
 
 def great_circle_distance(p1: tuple[float, float], p2: tuple[float, float]) -> float:
-    """Returns the great circle distance between the two given points using the equation below.
+    """
+    Returns the great circle distance between the two given points using the equation below.
 
     https://en.wikipedia.org/wiki/Great-circle_distance
 
@@ -113,14 +102,3 @@ def great_circle_distance(p1: tuple[float, float], p2: tuple[float, float]) -> f
 def _hav(num: float) -> float:
     """Returns the haversine of the number."""
     return math.sin(num / 2) ** 2
-
-
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
-
-    import python_ta
-    python_ta.check_all(config={
-        'max-line-length': 120,
-        'disable': ['forbidden-import']
-    })

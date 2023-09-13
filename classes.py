@@ -1,52 +1,44 @@
-"""The classes.py module of the ev-trip-sim project.
-https://github.com/skrukwa/ev-trip-sim
-
-Description
-===========
-
-This module specifies the following:
-  - ChargeStation (ADT graph vertex) dataclass
-  - _Edge (ADT graph edge) dataclass
-  - ChargeNetwork (ADT graph) class
-
-Copyright and Usage Information
-===============================
-
-This file is distributed under the ev-trip-sim project which is
-bounded by the terms of Apache License Version 2.0. For more
-information, please follow the github link above.
-
-This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
 """
-from __future__ import annotations
-
+----------Objectives----------
+Define custom classes to be used in other files.
+"""
 import datetime
+import json
+import math
 from dataclasses import dataclass
-from typing import Optional
+from queue import PriorityQueue
+from typing import Optional, Self
 
 import calcs
 
 
-@dataclass(frozen=True)
+@dataclass(eq=False, frozen=True)
 class ChargeStation:
-    """A dataclass representing a charger station.
+    """
+    A dataclass representing a charger station.
+
     This dataclass is used as vertices in the ChargeNetwork class.
-    Also, this dataclass in immutable so that it is hashable.
+
+    This dataclass in immutable so that it is hashable.
+
+    This class falls back to id based hashing and equality checking (due to the eq=False argument).
 
     Instance Attributes:
         - name: station name
         - address: street address
-        - hours: hours of operation (access times)
+        - hours: hours of operation
+        - phone: phone number
         - latitude: the station's latitude
         - longitude: the station's longitude
         - open_date: the station's open date
     """
-    name: str
-    address: str
-    hours: str
+    name: Optional[str]
+    address: Optional[str]
+    hours: Optional[str]
+    phone: Optional[str]
     latitude: float
     longitude: float
-    open_date: datetime.date
+    open_date: Optional[datetime.date]
 
     @property
     def coord(self) -> tuple[float, float]:
@@ -55,11 +47,10 @@ class ChargeStation:
 
 
 class _Edge:
-    """A dataclass representing an edge (driving route) from one charge station to another.
+    """
+    A dataclass representing an edge (driving route) from one charge station to another.
 
     An edge is said to be equal to another if its endpoints are equal.
-
-    NOTE: A user of this class is forbidden to create duplicate edges (it will result in duplicate hashes).
 
     Instance Attributes:
         - endpoints: the start and end charge stations of this edge (immutable)
@@ -78,6 +69,7 @@ class _Edge:
                  charger2: ChargeStation,
                  road_distance: float = None,
                  time: int = None) -> None:
+        """Initializes the object."""
 
         self._endpoints = {charger1, charger2}
         self.road_distance = road_distance
@@ -89,30 +81,38 @@ class _Edge:
         return self._endpoints
 
     def get_other_endpoint(self, charger: ChargeStation) -> ChargeStation:
-        """Returns the endpoint that isn't the input charger"""
+        """Returns the endpoint that isn't the input charger."""
         return (self._endpoints - {charger}).pop()
 
-    def __eq__(self, other: _Edge) -> bool:
-        """Return equality (based on endpoints) between self and other."""
+    def __eq__(self, other: Self) -> bool:
+        """
+        Return equality (based on endpoints) between self and other.
+
+        Used in ChargeNetwork.get_possible_edges
+        """
         return self.endpoints == other.endpoints
 
     def __hash__(self) -> int:
-        """Return the hash value."""
+        """
+        Return the hash value.
+
+        Lets _Edge objects be stored in sets.
+        """
         coords = [charger.coord for charger in self.endpoints]
         coords.sort()
         return hash((self.__class__, coords[0], coords[1]))
 
 
 class ChargeNetwork:
-    """A graph ADT representing a charge network.
+    """
+    A graph ADT representing a charge network.
 
     An edge from one charge station to another will not be considered (in the graph) if its
     road_distance is longer than self._ev_range.
 
     Instance Attributes:
+        - min_chargers_at_station: the min number of DC fast chargers at each charge station in this graph (immutable)
         - ev_range: the range of the EV vehicle this graph is based off of in kilometers (immutable)
-        - min_chargers_at_station: the min sum of type 2 and type DC chargers at each
-                                   charge station in this graph (immutable)
 
     Representation Invariants:
         - all(all(charger in edge for edge in edge_set) for charger, edge_set in _graph.items())
@@ -124,10 +124,54 @@ class ChargeNetwork:
     _graph: dict[ChargeStation, set[_Edge]]
 
     def __init__(self, min_chargers_at_station: int, ev_range: int) -> None:
-        """Initialize an empty graph."""
+        """Initializes an empty graph."""
         self._min_chargers_at_station = min_chargers_at_station
         self._ev_range = ev_range
         self._graph = {}
+
+    @classmethod
+    def from_json(cls, filepath: str) -> Self:
+        """
+        Creates a ChargeNetwork object by unpacking the JSON file created by the export_to_json method.
+        """
+        with open(filepath, 'r') as file:
+            data = json.load(file)
+
+        min_chargers_at_station = data['min_chargers_at_station']
+        ev_range = data['ev_range']
+
+        network = cls(min_chargers_at_station, ev_range)
+
+        # create all charge_stations
+        charge_stations = {
+            int(id): ChargeStation(
+                latitude=cs['latitude'],
+                longitude=cs['longitude'],
+                name=cs['name'],
+                phone=cs['phone'],
+                address=cs['address'],
+                hours=cs['hours'],
+                open_date=datetime.datetime.strptime(cs['open_date'], '%Y-%m-%d').date() if cs['open_date'] else None
+            )
+            for id, cs in data['_graph']['cs'].items()
+        }
+
+        # create all edges
+        edges = {_Edge(
+            charge_stations[edge['endpoint_ids'][0]],
+            charge_stations[edge['endpoint_ids'][1]],
+            edge['road_distance'],
+            edge['time']
+        ) for edge in data['_graph']['e']}
+
+        # add charge stations to graph
+        for cs in charge_stations.values():
+            network.add_charge_station(cs, set())
+
+        # add edges to graph
+        network.load_edges(edges)
+
+        return network
 
     @property
     def min_chargers_at_station(self) -> int:
@@ -148,7 +192,8 @@ class ChargeNetwork:
         return set(self._graph.keys())
 
     def corresponding_edges(self, charge_station: ChargeStation) -> set[_Edge]:
-        """Returns a set of edges corresponding to charge_station in the charge network.
+        """
+        Returns a set of edges corresponding to charge_station in the charge network.
 
         Preconditions
             - charge_station in self._graph
@@ -156,37 +201,40 @@ class ChargeNetwork:
         return self._graph[charge_station]
 
     def add_charge_station(self, station: ChargeStation, edges: set[_Edge]) -> None:
-        """Adds a charge station (and optionally a corresponding set of edges) to the graph.
+        """
+        Adds a charge station (and optionally a corresponding set of edges) to the graph.
 
         Preconditions:
             - station not in self._graph
          """
         self._graph[station] = edges
 
-    def get_list_of_possible_edges(self) -> list[_Edge]:
-        """Returns a list of all edges that may be needed to complete this network.
+    def get_possible_edges(self) -> set[_Edge]:
+        """
+        Returns a set of all edges that may be needed to complete this network.
 
         An edge that may be needed is one where the great circle distance between the two
         endpoints in less than self.ev_range. This is because a road distance between two
         charge stations will always be more than a great circle distance between two charge stations.
-
-        The returned list will have no duplicates in it (and is only a list due to hashing constraints).
         """
-        result = []
+        result = set()
 
         all_charge_stations = self.charge_stations()
 
         for i in all_charge_stations:
             for j in all_charge_stations:
-                if i != j and calcs.great_circle_distance(i.coord, j.coord) < self.ev_range:
+                if i is not j and calcs.great_circle_distance(i.coord, j.coord) < self.ev_range:
                     edge = _Edge(i, j)
                     if edge not in result:
-                        result.append(edge)
+
+                        result.add(edge)
 
         return result
 
-    def load_edges(self, edges: list[_Edge]) -> None:
-        """Takes a list of edges and mutates self by associating each edge with its 2 endpoints.
+    def load_edges(self, edges: set[_Edge]) -> None:
+        """
+        Takes a list of edges and mutates self by associating each edge with its 2 endpoints
+        if its road_distance is valid for this network.
 
         Preconditions:
             - self has no edges in it
@@ -197,66 +245,120 @@ class ChargeNetwork:
                 for charge_station in edge.endpoints:
                     self._graph[charge_station].add(edge)
 
-    # THE REST OF THE CODE IS SHORTEST WEIGHTED PATH FINDING
-
-    def get_hereditary_edges(self, initial: ChargeStation, final: ChargeStation) -> list[_Edge]:
-        """Orders and slices the given list of charge stations based on great circle distance to the destination.
-
-        Used in a greedy path finding implementation to reduce number of paths which need to be checked.
+    def get_shortest_path(self,
+                          charger1: ChargeStation,
+                          charger2: ChargeStation,
+                          min_leg_length: float,
+                          max_leg_length: float) -> Optional[list[_Edge]]:
         """
-        lst = list(self._graph[initial])
+        Implements A* search algorithm using great circle distance as heuristic since
+        great circle distance will always be less than the actual shortest path.
 
-        lst.sort(key=lambda u: calcs.great_circle_distance(u.get_other_endpoint(initial).coord, final.coord))
-        return lst[:2]
-
-    def get_shortest_path(self, charger1: ChargeStation, charger2: ChargeStation) -> Optional[list[_Edge]]:
-        """Return a sequence of edges that represent a path from charger1 to charger2
-        in this graph which minimizes the total travel time, or None if no path is found.
+        Returns a list of edges leading from charger1 to charger2 if a path is found,
+        or None if a path is not found.
 
         Preconditions:
-            - charger1 in self._graph
-            - charger2 in self._graph
+            - charger1 in self._graph and charger2 in self._graph
         """
-        return self.get_shortest_path_helper(charger1, charger2, set(), None)
+        # implementation note: fringe contents are stored to enable (constant time) membership checking,
+        #                      as well as being able to "remove" items from fringe by mutating their value
+        #                      at index 2 to False
 
-    def get_shortest_path_helper(self,
-                                 charge1: ChargeStation,
-                                 charge2: ChargeStation,
-                                 visited: set[ChargeStation],
-                                 min_length: Optional[float]) -> Optional[list[_Edge]]:
-        """Recursive helper for the get_shortest_path method."""
-        if charge1 == charge2:
+        fringe = PriorityQueue()  # possible chargers to expand search to
+
+        # fringe contains lists of 4 values
+        #     - index 0 is f_score
+        #     - index 1 is entry index to ensure LIFO tie breaks and that remaining elements are never compared
+        #     - index 2 is whether this item is valid or has instead been re-added to the queue
+        #       (non-valid lists do not have their charger in fringe_contents)
+        #     - index 3 is the charger
+
+        fringe.put([0, 1, True, charger1])
+
+        fringe_contents = {}  # maps charger in queue to its list in queue
+
+        prev_edges = {}  # for node n, prev_edges[n] is the edge leading to n in the shortest path currently known to n
+
+        g_scores = {charger: math.inf for charger in self._graph}
+        g_scores[charger1] = 0
+
+        entry_index = 0
+        while not fringe.empty():
+            current_list = fringe.get()
+            if not current_list[2]:
+                continue
+
+            current_charger = current_list[3]
+
+            if current_charger is charger2:
+                return self._reconstruct_path(charger2, prev_edges)
+
+            for edge in self.corresponding_edges(current_charger):
+
+                if min_leg_length < edge.road_distance < max_leg_length:  # ignore edges that do not fit length criteria
+
+                    neighbour = edge.get_other_endpoint(current_charger)
+                    temp_neighbour_g_score = g_scores[current_charger] + edge.road_distance
+
+                    if temp_neighbour_g_score < g_scores[neighbour]:
+                        # this path to neighbour is better than any previous one
+                        prev_edges[neighbour] = edge
+                        g_scores[neighbour] = temp_neighbour_g_score
+
+                        f_score = g_scores[neighbour] + calcs.great_circle_distance(neighbour.coord, charger2.coord)
+
+                        if neighbour in fringe_contents:  # update f_score of neighbour in fringe
+                            fringe_contents[neighbour][2] = False
+                        fringe_contents[neighbour] = [f_score, entry_index, True, neighbour]
+                        fringe.put(fringe_contents[neighbour])
+                        entry_index -= 1
+
+        return None
+
+    def _reconstruct_path(self, end: ChargeStation, prev_edges: dict[ChargeStation, _Edge]) -> list[_Edge]:
+        """Returns a list of edges leading from the start charger in prev_edges to end in that order."""
+        if end not in prev_edges:
             return []
+        else:
+            return self._reconstruct_path(prev_edges[end].get_other_endpoint(end), prev_edges) + [prev_edges[end]]
 
-        my_output = None
-        new_min = min_length
-        v2 = visited.copy()
-        v2.add(charge1)
-        if new_min is not None and new_min <= 0:
-            return None
-        for u in self.get_hereditary_edges(charge1, charge2):
-            other_charger = u.get_other_endpoint(charge1)
-            if other_charger not in visited:
-                if new_min is not None:
-                    neighbors_path = self.get_shortest_path_helper(
-                        other_charger, charge2, v2, new_min - u.time
-                    )
-                else:
-                    neighbors_path = self.get_shortest_path_helper(other_charger, charge2, v2, None)
-                if neighbors_path is not None:
-                    neighbors_path_len = sum([i.time for i in neighbors_path]) + u.time
-                    if new_min is None or new_min > neighbors_path_len:
-                        new_min = neighbors_path_len
-                        my_output = ([u] + neighbors_path)
-        return my_output
+    def export_to_json(self, filepath: str) -> None:
+        """
+        Outputs a JSON file representing the ChargeNetwork self, using python id values
+        of ChargeStation objects and _Edge objects.
+        """
+        charge_stations = {
+            id(cs): {
+                'name': cs.name,
+                'address': cs.address,
+                'hours': cs.hours,
+                'phone': cs.phone,
+                'latitude': cs.latitude,
+                'longitude': cs.longitude,
+                'open_date': str(cs.open_date) if cs.open_date else None
+            }
+            for cs in self._graph.keys()
+        }
 
+        edges = [
+            {
+                'endpoint_ids': [id(e) for e in edge.endpoints],
+                'road_distance': edge.road_distance,
+                'time': edge.time
+            }
+            for edge in set.union(*self._graph.values())  # removes duplicates since edges are equal if endpoints equal
+        ]
 
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
+        data = {
+            'min_chargers_at_station': self.min_chargers_at_station,
+            'ev_range': self.ev_range,
+            '_graph': {
+                'cs': charge_stations,
+                'e': edges
+            }
+        }
 
-    import python_ta
-    python_ta.check_all(config={
-        'max-line-length': 120,
-        'disable': ['forbidden-import', 'too-many-nested-blocks']
-    })
+        print(f'exporting network with {len(charge_stations)} charge stations and {len(edges)} edges to json')
+
+        with open(filepath, 'w') as file:
+            json.dump(data, file, indent=4)

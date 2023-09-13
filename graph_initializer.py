@@ -1,19 +1,9 @@
-"""The graph_initializer.py module of the ev-trip-sim project.
-https://github.com/skrukwa/ev-trip-sim
+"""
+----------Objectives----------
+Create ChargeNetwork objects from csv dataset files.
 
-Description
-===========
-
-This module is responsible for creating charge network graphs from csv dataset files.
-
-Copyright and Usage Information
-===============================
-
-This file is distributed under the ev-trip-sim project which is
-bounded by the terms of Apache License Version 2.0. For more
-information, please follow the github link above.
-
-This file is Copyright (c) Evan Skrukwa and Nadim Mottu.
+----------Resources used----------
+https://afdc.energy.gov/fuels/electricity_locations.html#/analyze?fuel=ELEC
 """
 import csv
 import datetime
@@ -25,10 +15,11 @@ from classes import ChargeNetwork, ChargeStation
 
 
 def load_chargers_to_graph(charge_network: ChargeNetwork, filepath: str) -> None:
-    """Takes an empty ChargeNetwork object and adds each row of the csv
-    at filepath as a charge station as long as it has a sum of at least
-    charge_network.min_chargers_at_station type 2 and type DC chargers
-    and is located in mainland North America.
+    """
+    Takes an empty ChargeNetwork object and adds each row of the csv
+    at filepath as a charge station as long as
+        - it has at least charge_network.min_chargers_at_station DC fast chargers and
+        - it is located in mainland North America.
 
     This is a mutating method.
 
@@ -40,56 +31,41 @@ def load_chargers_to_graph(charge_network: ChargeNetwork, filepath: str) -> None
     with open(filepath) as f:
         reader = csv.reader(f)
         next(reader)  # skip the header
+
         for row in reader:
-            type_2_count = int(row[18]) if row[18] else 0
-            type_dc_count = int(row[19]) if row[19] else 0
+            dc_fast_count = int(row[19]) if row[19] else 0
 
             lat = float(row[24])
             lon = float(row[25])
-            name = row[1]
-            addr = row[2]
-            hours = row[12]
+            name = row[1] if row[1] else None
+            addr = row[2] if row[2] else None
+            phone = row[8] if row[8] else None
+            hours = row[12] if row[12] else None
+            date = datetime.datetime.strptime(row[32], '%Y-%m-%d').date() if row[32] else None
 
-            if type_2_count + type_dc_count >= charge_network.min_chargers_at_station and _in_mainland(lat, lon):
+            if dc_fast_count >= charge_network.min_chargers_at_station and _in_mainland(lat, lon):
+                new_charger = ChargeStation(
+                    latitude=lat,
+                    longitude=lon,
+                    name=name,
+                    phone=phone,
+                    address=addr,
+                    hours=hours,
+                    open_date=date
+                )
 
-                date = None
-                try:
-                    date = datetime.datetime.strptime(row[32], '%Y-%m-%d').date()
-                except ValueError:
-                    print('skipped this row due to a parsing error')  # strptime error
-
-                if date:
-                    new_charger = ChargeStation(
-                        name=name,
-                        address=addr,
-                        hours=hours,
-                        latitude=lat,
-                        longitude=lon,
-                        open_date=date)
-
-                    charge_network.add_charge_station(new_charger, set())
+                charge_network.add_charge_station(new_charger, set())
 
 
 def _in_mainland(lat: float, lon: float) -> bool:
     """Returns True if the given coordinate is in mainland North America.
-    >>> _in_mainland(40.7128, -74.0060) # New York
+    >>> _in_mainland(40.7128, -74.0060)  # new york
     True
-    >>> _in_mainland(49.2827, -123.1207) # Vancouver
+    >>> _in_mainland(49.2827, -123.1207)  # vancouver
     True
-    >>> _in_mainland(51.5074, -0.1278) # London
+    >>> _in_mainland(51.5074, -0.1278)  # london
     False
     """
     point = Point(lat, lon)
     north_america_polygon = Polygon([(52, -170), (71, -166), (46, -48), (24, -80), (24, -120)])
     return north_america_polygon.contains(point)
-
-
-if __name__ == '__main__':
-    import doctest
-    doctest.testmod()
-
-    import python_ta
-    python_ta.check_all(config={
-        'max-line-length': 120,
-        'disable': ['forbidden-import', 'forbidden-IO-function']
-    })
