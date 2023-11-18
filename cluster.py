@@ -86,7 +86,7 @@ class ClusterTree:
             new_cluster2 = set()
             for charge_station in charge_stations:
                 if calcs.great_circle_distance(charge_station.coord, charge_station1.coord) < \
-                   calcs.great_circle_distance(charge_station.coord, charge_station2.coord):
+                        calcs.great_circle_distance(charge_station.coord, charge_station2.coord):
                     new_cluster1.add(charge_station)
                 else:
                     new_cluster2.add(charge_station)

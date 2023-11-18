@@ -1,0 +1,114 @@
+body {
+    margin: 0;
+}
+
+main h2 {
+    text-align: center;
+    margin: 2rem;
+}
+
+#content-center {
+    width: fit-content;
+    margin: 0 auto;
+}
+
+#content-margin {
+    max-width: 50rem;
+    margin: 2rem;
+}
+
+input[type=button] {
+    display: block;
+    width: fit-content;
+    margin-bottom: 1rem;
+}
+
+#form-table {
+
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 0.5rem
+}
+
+.oneline {
+    white-space: nowrap;
+    min-width: max-content;
+}
+
+.notation {
+    float: right;
+    margin-left: 1rem;
+}
+
+#form-table input[type=text],
+#form-table input[type=number],
+#form-table input[type=range] {
+    margin-bottom: 1rem;
+}
+
+#form-table label {
+    grid-column: 1 / 4;
+}
+
+#form-table input[type=text] {
+    grid-column: 5 / 9;
+    min-width: 12ch;
+}
+
+#form-table input[type=number] {
+    grid-column: 8 / 9;
+}
+
+#form-table input[type=range] {
+    grid-column: 4 / 8;
+}
+
+.req {
+    grid-column: 1 / 9;
+}
+
+#submit-button {
+    grid-column: 1 / -1;
+    width: 8rem;
+    margin: 1rem auto 0 auto
+}
+
+.tooltip {
+    white-space: normal;
+    position: relative;
+    display: inline-block;
+    --width: 10rem;
+    --arrow-height: 0.375rem;
+    --top-margin: 0.125rem;
+    --text-padding: 0.5rem;
+    --background-color: black;
+    --background-radius: 0.25rem;
+}
+
+.tooltip .tooltiptext {
+    position: absolute;
+    visibility: hidden;
+    width: var(--width);
+    left: calc(50% - var(--width) / 2);
+    top: calc(100% + var(--arrow-height) + var(--top-margin));
+    color: white;
+    background-color: black;
+    text-align: center;
+    padding: var(--text-padding);
+    border-radius: var(--background-radius);
+    z-index: 1;
+  }
+
+.tooltip .tooltiptext::after {
+    content: '';
+    position: absolute;
+    border-width: var(--arrow-height);
+    border-style: solid;
+    border-color: transparent transparent var(--background-color) transparent;
+    left: calc(50% - var(--arrow-height));
+    bottom: 100%;
+}  
+  
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}

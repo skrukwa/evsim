@@ -2,12 +2,11 @@
 ----------Objectives----------
 Create networks.
 """
-
 import googlemaps
 
 import cluster
+import complete_edges
 import graph_initializer
-import maps_api
 import visuals
 from classes import ChargeNetwork
 
@@ -70,7 +69,7 @@ def make_network(input_filepath: str,
 
     edges = simplified_network.get_possible_edges()
     gmaps = googlemaps.Client(key=input('what is your google maps api key: '))
-    maps_api.mutate_edges(edges, gmaps)
+    complete_edges.mutate_edges(edges, gmaps)
     simplified_network.load_edges(edges)
 
     visuals.graph_network(simplified_network)

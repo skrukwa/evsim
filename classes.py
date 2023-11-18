@@ -12,6 +12,22 @@ from typing import Optional, Self
 import calcs
 
 
+class PathNotNeeded(Exception):
+    """Exception raised when trying to find a path between the same 2 charge stations."""
+
+    def __str__(self) -> str:
+        """Return a string representation of this error."""
+        return 'tried to find a path between the same 2 charge stations'
+
+
+class PathNotFound(Exception):
+    """Exception raised when a path between 2 charge stations does not exist."""
+
+    def __str__(self) -> str:
+        """Return a string representation of this error."""
+        return 'no path between the 2 charge stations was found'
+
+
 @dataclass(eq=False, frozen=True)
 class ChargeStation:
     """
@@ -44,6 +60,18 @@ class ChargeStation:
     def coord(self) -> tuple[float, float]:
         """Returns the latitude, longitude pair of this charge station"""
         return self.latitude, self.longitude
+
+    @property
+    def dict(self) -> dict[str, str]:
+        return {
+            "name": self.name,
+            "address": self.address,
+            "hours": self.hours,
+            "phone": self.phone,
+            "latitude": self.latitude,
+            "longitude": self.longitude,
+            "open_date": f'{self.open_date:%B %d %Y}'.replace(' 0', ' ') if self.open_date else None
+        }
 
 
 class _Edge:
@@ -107,8 +135,8 @@ class ChargeNetwork:
     """
     A graph ADT representing a charge network.
 
-    An edge from one charge station to another will not be considered (in the graph) if its
-    road_distance is longer than self._ev_range.
+    An edge from one charge station to another will not be in the graph if
+    its road_distance is longer than self._ev_range.
 
     Instance Attributes:
         - min_chargers_at_station: the min number of DC fast chargers at each charge station in this graph (immutable)
@@ -226,7 +254,6 @@ class ChargeNetwork:
                 if i is not j and calcs.great_circle_distance(i.coord, j.coord) < self.ev_range:
                     edge = _Edge(i, j)
                     if edge not in result:
-
                         result.add(edge)
 
         return result
@@ -254,8 +281,11 @@ class ChargeNetwork:
         Implements A* search algorithm using great circle distance as heuristic since
         great circle distance will always be less than the actual shortest path.
 
-        Returns a list of edges leading from charger1 to charger2 if a path is found,
-        or None if a path is not found.
+        Returns a list of edges leading from charger1 to charger2 if a path is found.
+
+        Raises PathNotFound or PathNotNeeded.
+
+        min_leg_length and max_leg_length are in kilometers.
 
         Preconditions:
             - charger1 in self._graph and charger2 in self._graph
@@ -291,7 +321,10 @@ class ChargeNetwork:
             current_charger = current_list[3]
 
             if current_charger is charger2:
-                return self._reconstruct_path(charger2, prev_edges)
+                result = self._reconstruct_path(charger2, prev_edges)
+                if result:
+                    return result
+                raise PathNotNeeded
 
             for edge in self.corresponding_edges(current_charger):
 
@@ -313,7 +346,7 @@ class ChargeNetwork:
                         fringe.put(fringe_contents[neighbour])
                         entry_index -= 1
 
-        return None
+        raise PathNotFound
 
     def _reconstruct_path(self, end: ChargeStation, prev_edges: dict[ChargeStation, _Edge]) -> list[_Edge]:
         """Returns a list of edges leading from the start charger in prev_edges to end in that order."""

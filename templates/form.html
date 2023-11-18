@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='global.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='form.css') }}">
+    <script src="{{ url_for('static', filename='form.js') }}" defer></script>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.png') }}">
+    <title>evsim</title>
+    <meta name="description" content="Get EV map routing by specifying location, range, and battery. Created by Evan Skrukwa.">
+  </head> 
+  <body>
+    <main>
+      <h2>
+        <a href="https://evsim.ca">evsim.ca</a> alpha v1.0<br>by <a href="https://linkedin.com/in/skrukwa">Evan Skrukwa</a><br>documented on <a href="https://github.com/skrukwa/ev-trip-sim">GitHub</a>
+      </h2>
+    </main>
+    <div id="content-center">
+      <div id="content-margin">
+        <input type="button" value="autofill coords LAX -> JFK" id="auto-fill-1">
+        <input type="button" value="autofill coords YVR -> MIA" id="auto-fill-2">
+        <form method="post">
+          <div id="form-table">
+
+            <label for="start-lat" class="oneline">
+              start lat
+              <span class="notation">(<i>lat<sub>s</sub></i>)</span>
+            </label>
+            <input type="text" autocomplete="off" {{ 'value=' ~ session['start-lat'] if session['start-lat'] }} name="start-lat" id="start-lat" required>
+
+            <label for="start-lon" class="oneline">
+              start lon
+              <span class="notation">(<i>lon<sub>s</sub></i>)</span></label>
+            </label>
+            <input type="text" autocomplete="off" {{ 'value=' ~ session['start-lon'] if session['start-lon'] }} name="start-lon" id="start-lon" required>
+
+            <label for="end-lat" class="oneline">
+              end lat
+              <span class="notation">(<i>lat<sub>e</sub></i>)</span></label>
+            </label>
+            <input type="text" autocomplete="off" {{ 'value=' ~ session['end-lat'] if session['end-lat'] }} name="end-lat" id="end-lat" required>
+
+            <label for="end-lon" class="oneline">
+              end lon
+              <span class="notation">(<i>lon<sub>e</sub></i>)</span></label>
+            </label>
+            <input type="text" autocomplete="off" {{ 'value=' ~ session['end-lon'] if session['end-lon'] }} name="end-lon" id="end-lon" required>
+
+            <label for="min-leg-length-input" class="oneline">
+              min leg length (km)
+              <div class="tooltip">&#8505;&#65039;<span class="tooltiptext">min road distance for each leg of the trip to avoid too frequent stops</span></div>
+              <span class="notation">(<i>ll<sub>min</sub></i>)</span>
+            </label>
+            <input type="range" max="700" {{'value=' ~ session['min-leg-length'] }} name="min-leg-length-slider" id="min-leg-length-slider">
+            <input type="number" min="0" max="700" name="min-leg-length-input" id="min-leg-length-input" required>
+
+            <label for="ev-range-input" class="oneline">
+              ev range (km)
+              <div class="tooltip">&#8505;&#65039;<span class="tooltiptext">total EV range on a full charge</span></div>
+              <span class="notation">(<i>r</i>)</span>
+            </label>
+            <input type="range" max="1000" {{'value=' ~ session['ev-range'] }} name="ev-range-slider" id="ev-range-slider">
+            <input type="number" min="0" max="1000" name="ev-range-input" id="ev-range-input" required>
+
+            <label for="min-battery-input" class="oneline">
+              min battery %
+              <div class="tooltip">&#8505;&#65039;<span class="tooltiptext">battery % the EV will never go below during its trip</span></div>
+              <span class="notation">(100 * <i>b<sub>min</sub></i>)</span>
+            </label>
+            <input type="range" max="100" {{'value=' ~ session['min-battery'] }} name="min-battery-slider" id="min-battery-slider">
+            <input type="number" min="0" max="100" name="min-battery-input" id="min-battery-input" required>
+
+            <label for="max-battery-input" class="oneline">
+              max battery %
+              <div class="tooltip">&#8505;&#65039;<span class="tooltiptext">battery % the EV will never excede during its trip</span></div>
+              <span class="notation">(100 * <i>b<sub>max</sub></i>)</span>
+            </label>
+            <input type="range" max="100" {{'value=' ~ session['max-battery'] }} name="max-battery-slider" id="max-battery-slider">
+            <input type="number" min="0" max="100" name="max-battery-input" id="max-battery-input" required>
+
+            <label for="start-battery-input" class="oneline">
+              start battery %
+              <div class="tooltip">&#8505;&#65039;<span class="tooltiptext">battery % the EV starts its trip at</span></div>
+              <span class="notation">(100 * <i>b<sub>s</sub></i>)</span>
+            </label>
+            <input type="range" max="100" {{'value=' ~ session['start-battery'] }} name="start-battery-slider" id="start-battery-slider">
+            <input type="number" min="0" max="100" name="start-battery-input" id="start-battery-input" required>
+
+            <span class="req oneline" id="input-req-title"><b>requirements</b></span>
+            <span class="req oneline" id="input-req-1">20 &le; <i>lat<sub>s</sub></i> & <i>lat<sub>e</sub></i> &le; 70</span>
+            <span class="req oneline" id="input-req-2">-160 &le; <i>lon<sub>s</sub></i> & <i>lon<sub>e</sub></i> &le; -60</span>
+            <span class="req oneline" id="input-req-3"><i>b<sub>min</sub></i> &le; <i>b<sub>max</sub></i></span>
+            <div class="req oneline" id="input-req-4" title="hey bro test whats up">
+              <span id="input-req-4-l"><i>ll<sub>min</sub></i> &le; </span>
+              <span id="input-req-4-m">(<i>b<sub>max</sub></i> - <i>b<sub>min</sub></i>) (<i>r</i>)</span>
+              <span id="input-req-4-r"> &le; 700</span>
+            </div>
+
+            <input type="submit" id="submit-button" value="submit">
+
+          </div>
+        </form>
+        {% if errors %}
+          <span><b>error(s)</b></span>
+          <ul>
+          {% for error in errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    </div>
+  </body>
+</html>
