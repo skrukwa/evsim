@@ -1,9 +1,0 @@
-# PyCharm configuration
-.idea/
-
-# Compiled python modules.
-*.pyc
-__pycache__/
-
-# DS_Store
-*.DS_Store
