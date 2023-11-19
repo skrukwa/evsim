@@ -125,8 +125,10 @@ function updateRequirements() {
     submitButton.disabled = !en
 }
 
-auto1.addEventListener("click", doAuto1)
-auto2.addEventListener("click", doAuto2)
+auto1.addEventListener('click', doAuto1)
+auto1.addEventListener('click', updateRequirements)
+auto2.addEventListener('click', doAuto2)
+auto2.addEventListener('click', updateRequirements)
 
 link(minLegLengthSlider, minLegLengthInput)
 link(evRangeSlider, evRangeInput)

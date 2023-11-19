@@ -125,7 +125,6 @@ def index():
             input_errors.append(f'expected min leg length <= 700 but got {request.form["min-leg-length-slider"]}')
             session['min-leg-length'] = SESSION_VARS_DEFAULTS['min-leg-length']
         else:
-            print('set session min leg length to', int(request.form['min-leg-length-slider']))
             session['min-leg-length'] = int(request.form['min-leg-length-slider'])
 
         if request.form['ev-range-slider'] != request.form['ev-range-input']:
