@@ -45,7 +45,7 @@ def make_network(input_filepath: str,
     full_network = ChargeNetwork(min_chargers, ev_range)
     graph_initializer.load_chargers_to_graph(full_network, input_filepath)
 
-    visuals.graph_network(full_network)
+    visuals.graph_network(full_network, display_result=True)
     print(f'number of charge stations in full network: {len(full_network.charge_stations())}')
 
     # STEP 2. MAKE A CLUSTER TREE BASED OF THE FIRST GRAPH
@@ -53,7 +53,7 @@ def make_network(input_filepath: str,
     cluster_tree = cluster.ClusterTree(full_network.charge_stations(), cluster_diameter)
 
     cluster_list = cluster_tree.get_list_of_clusters()
-    visuals.graph_clusters(cluster_list)
+    visuals.graph_clusters(cluster_list, display_result=True)
     print(f'number of charge stations in clustered network: {len(cluster_list)}')
 
     # STEP 3. MAKE A NEW GRAPH WITH THE CLUSTERED DATA
@@ -63,7 +63,7 @@ def make_network(input_filepath: str,
     for charger in centroids:
         simplified_network.add_charge_station(charger, set())
 
-    visuals.graph_network(simplified_network)
+    visuals.graph_network(simplified_network, display_result=True)
 
     # STEP 4. ADD EDGES TO THE NEW GRAPH USING GOOGLEMAPS API
 
@@ -72,7 +72,7 @@ def make_network(input_filepath: str,
     complete_edges.mutate_edges(edges, gmaps)
     simplified_network.load_edges(edges)
 
-    visuals.graph_network(simplified_network)
+    visuals.graph_network(simplified_network, display_result=True)
 
     # STEP 5. OUTPUT THE JSON FILE
 
