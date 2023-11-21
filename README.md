@@ -15,7 +15,7 @@ Routing an EV trip that is longer than the EV's range involves stopping at 1 or 
 
 To limit the complexity of the charge network without drastically changing its functionality, charge stations are clustered into groups contained within a certain diameter[^2] and then replaced by each group's most central charge station. This is implemented recursively using a divisive [hierarchical clustering
 ](https://en.wikipedia.org/wiki/Hierarchical_clustering) tree.
-[^2] Currently this is 60km.
+[^2]: Currently this is 60km.
 
 Initial Charge Network (n=3606) | Clustered Charge Network (n=942)
 --- | ---
@@ -28,7 +28,11 @@ Clusters in Initial Charge Network Zoomed | Clustered Charge Network Zoomed
 ## Possible Legs
 
 A possible leg is defined as a leg which has a road distance less than the max supported EV range of the charge network[^3]. To initially populate the charge network with all possible legs, an API call must be made for each leg to compare road distance to the max supported EV range of the charge network. Using great circle distance between two charge stations as a heuristic makes the number of API calls needed feasible; an API call is only needed if the great circle distance is less than the max supported EV range of the charge network since the road distance is certainly greater than the great circle distance.
-[^3] Currently this is 700km.
+[^3]: Currently this is 700km.
+
+| Completed Charge Network |
+| --- |
+| ![completed charge network image](readme_assets/charge_network.png) |
 
 ## Routing
 
@@ -37,7 +41,7 @@ Given that the charge network represents all possible legs for the EV, routing f
 ## Simulating Battery
 
 After a route has been found, the start battery of the EV is initialized based on the user input. Battery depletion is simulated linearly with road distance. Battery charging is simulated following a non-linear regression of current battery technology where the charge rate diminishes as the battery approaches fully charged[^4]. With this in mind, at each charge station, the EV is only simulated to charge *just* enough to make it to the next charge station as charging more than that will be at an unoptimal charge rate.
-[^4] Currently [this](https://www.desmos.com/calculator/fusfey6wwn) is the regression function used.
+[^4]: Currently [this](https://www.desmos.com/calculator/fusfey6wwn) is the regression function used.
 
 # Web App Implementation
 
