@@ -70,7 +70,7 @@ def find_furthest_apart(points: set[Any],
 
 def great_circle_distance(p1: tuple[float, float], p2: tuple[float, float]) -> float:
     """
-    Returns the great circle distance between the two given points using the equation below.
+    Returns the great circle distance in kilometers between the two given points using the equation below.
 
     https://en.wikipedia.org/wiki/Great-circle_distance
 

@@ -212,19 +212,16 @@ def index():
         # try to display result
 
         try:
-            result_dict = main.find_path_and_get_json_ready(
-                input_filepath='created_network/network.json',
-                min_leg_length=session['min-leg-length'],
-                ev_range=session['ev-range'],
-                min_battery=session['min-battery'] / 100,
-                max_battery=session['max-battery'] / 100,
-                start_battery=session['start-battery'] / 100,
-                charge_curve=generic_charge_curve,
-                coord1=(session['start-lat'], session['start-lon']),
-                coord2=(session['end-lat'], session['end-lon'])
-            )
+            json_dict = main.do_request(input_filepath='created_network/network.json',
+                                        min_leg_length=session['min-leg-length'], ev_range=session['ev-range'],
+                                        min_battery=session['min-battery'] / 100,
+                                        max_battery=session['max-battery'] / 100,
+                                        start_battery=session['start-battery'] / 100,
+                                        charge_curve=generic_charge_curve,
+                                        coord1=(session['start-lat'], session['start-lon']),
+                                        coord2=(session['end-lat'], session['end-lon']))
 
-            return render_template('gmap.html', result_dict=result_dict)
+            return render_template('gmap.html', result_dict=json_dict)
 
         except PathNotNeeded:
             input_errors.append('no path was needed since start coord and end coord snapped to same charge station')

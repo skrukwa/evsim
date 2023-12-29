@@ -1,6 +1,6 @@
 """
 ----------Objectives----------
-Create a Divisive Hierarchical Clustering tree containing charge stations.
+Create a divisive hierarchical clustering tree containing charge stations.
 """
 from typing import Self
 
@@ -10,7 +10,7 @@ from classes import ChargeStation
 
 class ClusterTree:
     """
-    A recursive Divisive Hierarchical Clustering tree which clusters charge stations until
+    A recursive divisive hierarchical clustering tree which clusters charge stations until
     each cluster has a diameter less than max_cluster_diameter.
 
     After being fully initialized,
@@ -66,7 +66,7 @@ class ClusterTree:
         self._centroid = calcs.find_lowest_average_distance(
             points=charge_stations,
             distance_func=calcs.great_circle_distance,
-            coords_key=lambda charger: charger.coord
+            coords_key=lambda cs: cs.coord
         )
 
         # STEP 2. see if the charge stations need to be further clustered
@@ -74,7 +74,7 @@ class ClusterTree:
         charge_station1, charge_station2 = calcs.find_furthest_apart(
             points=charge_stations,
             distance_func=calcs.great_circle_distance,
-            coords_key=lambda charger: charger.coord
+            coords_key=lambda cs: cs.coord
         )
 
         distance_furthest_apart = calcs.great_circle_distance(charge_station1.coord, charge_station2.coord)
@@ -98,7 +98,7 @@ class ClusterTree:
 
     @property
     def max_cluster_diameter(self) -> float:
-        """An immutable getter for self._max_cluster_diameter."""
+        """A getter for self._max_cluster_diameter."""
         return self._max_cluster_diameter
 
     def get_list_of_clusters(self) -> list[list[ChargeStation]]:

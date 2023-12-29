@@ -8,14 +8,14 @@ import googlemaps
 
 import calcs
 import creds
-import polylines
+import path_sim
 import visuals
 from classes import ChargeNetwork
 
 
 def generic_charge_curve(charge: float):
     """
-    Returns the time in seconds to charge from 0.00 to charge using to following model.
+    Returns the driving time in seconds to charge from 0.00 to charge using to following model.
 
     https://www.desmos.com/calculator/fusfey6wwn
 
@@ -31,19 +31,20 @@ def generic_charge_curve(charge: float):
     return f * x ** 1 + g * x ** 2 + h * x ** 3 + i * x ** 4 + j * x ** 5
 
 
-def find_path_and_get_json_ready(input_filepath: str,
-                                 min_leg_length: float,
-                                 ev_range: float,
-                                 min_battery: float,
-                                 max_battery: float,
-                                 start_battery: float,
-                                 charge_curve: Callable,
-                                 coord1: Optional[tuple[float, float]],
-                                 coord2: Optional[tuple[float, float]]) -> dict:
+def do_request(input_filepath: str,
+               min_leg_length: float,
+               ev_range: float,
+               min_battery: float,
+               max_battery: float,
+               start_battery: float,
+               charge_curve: Callable,
+               coord1: Optional[tuple[float, float]],
+               coord2: Optional[tuple[float, float]]) -> dict:
     """
     Finds the closest charge stations to coord1 and coord2 in the given network and
-    then finds the shortest path, makes a Google Maps API call to find the polyline,
-    simulates charging on that polyline, and returns a JSON ready dict summary.
+    then finds the shortest path. Makes a call to the given googlemaps client to find the
+    polyline, bounds, and up-to-date driving_distance and driving_time.
+    Returns a JSON compatible dict summary.
 
     Raises PathNotFound or PathNotNeeded.
 
@@ -52,29 +53,31 @@ def find_path_and_get_json_ready(input_filepath: str,
         - 0 <= min_battery <= max_battery <= 1
         - min_leg_length <= (max_battery - min_battery) * ev_range <= _ev_range of the network at input_filepath
     """
+    request_data = {
+        'start_coord': coord1,
+        'end_coord': coord2,
+        'min_leg_length': min_leg_length,
+        'ev_range': ev_range,
+        'min_battery': min_battery,
+        'max_battery': max_battery,
+        'start_battery': start_battery
+    }
+
     net = ChargeNetwork.from_json(input_filepath)
 
-    set_of_chargers = net.charge_stations()
-    list_of_chargers = list(set_of_chargers)
-    c1 = min(list_of_chargers, key=lambda c: calcs.great_circle_distance(coord1, c.coord))
-    c2 = min(list_of_chargers, key=lambda c: calcs.great_circle_distance(coord2, c.coord))
+    all_charge_stations = list(net.charge_stations())
+    cs1 = min(all_charge_stations, key=lambda c: calcs.great_circle_distance(coord1, c.coord))
+    cs2 = min(all_charge_stations, key=lambda c: calcs.great_circle_distance(coord2, c.coord))
 
-    path = net.get_shortest_path(c1, c2, min_leg_length, (max_battery - min_battery) * ev_range)
+    path = net.get_shortest_path(cs1, cs2, min_leg_length, (max_battery - min_battery) * ev_range)
     # could raise PathNotFound or PathNotNeeded
 
     gmaps = googlemaps.Client(key=creds.get_key())
-    polyline = polylines.get_polyline_legs(path, c1, gmaps)
-    # could raise googlemaps.exceptions.ApiError
 
-    polyline_with_charging = polylines.get_polyline_with_charging(
-        polyline=polyline,
-        ev_range=ev_range,
-        min_battery=min_battery,
-        start_battery=start_battery,
-        charge_curve=charge_curve
-    )
-
-    return polylines.get_json_ready(path, c1, polyline_with_charging)
+    info, polyline, bounds = path_sim.get_path_info(path, cs1, gmaps)
+    dest_start_battery = path_sim.simulate_path_charging(ev_range, min_battery, start_battery, charge_curve, info)
+    json_dict = path_sim.prepare_json_dict(path, cs1, info, polyline, bounds, dest_start_battery, request_data)
+    return json_dict
 
 
 if __name__ == '__main__':

@@ -7,38 +7,39 @@ function get_key() {return String.fromCharCode(...KEY.split('_'))}
 
 async function initMap() {
 
-    const { LatLng } = await google.maps.importLibrary('core')
+    const { LatLng, LatLngBounds } = await google.maps.importLibrary('core')
     const { Map, Polyline, InfoWindow } = await google.maps.importLibrary('maps')
+    const { encoding } = await google.maps.importLibrary('geometry')
     const { AdvancedMarkerElement } = await google.maps.importLibrary('marker')
 
     const map = new Map(document.getElementById('map'), {
-        zoom: 5,
-        center: { lat: 39.784305, lng: -101.372835 },
-        mapTypeId: 'terrain',
         mapId: 'DEMO_MAP_ID'
     })
 
-    let coords = []
-    for (let leg of data['legs_summary']) {
-        for (let coord of leg['polyline']) {
-            coords.push(new LatLng(coord[0], coord[1]))
-        }
-    }
-    const polyline = new Polyline({
-        path: coords,
-        geodesic: true,
-        strokeColor: '#FF0000',
-        strokeOpacity: 1.0,
-        strokeWeight: 2,
+    const sw = new LatLng(data['bounds']['southwest']['lat'], data['bounds']['southwest']['lng'])
+    const ne = new LatLng(data['bounds']['northeast']['lat'], data['bounds']['northeast']['lng'])
+    map.fitBounds(new LatLngBounds(sw, ne))
+
+    const polyline1 = new Polyline({
+        path: encoding.decodePath(data['polyline']),
+        strokeColor: '#e03a3a',
+        strokeWeight: 5,
     })
-    polyline.setMap(map)
+    polyline1.setMap(map)
+
+    const polyline2 = new Polyline({
+        path: encoding.decodePath(data['polyline']),
+        strokeColor: '#ff9c9c',
+        strokeWeight: 3,
+    })
+    polyline2.setMap(map)
 
     for (let leg of data['legs_summary']) {
         const cs = leg['charge_station']
 
         const marker = new AdvancedMarkerElement({
             map: map,
-            position: new LatLng(cs['latitude'], cs['longitude']),
+            position: new LatLng(cs['lat'], cs['lng']),
             title: cs['name']
         })
         const infowindow = new InfoWindow({
@@ -60,7 +61,7 @@ async function initMap() {
 
     marker = new google.maps.Marker({
         map: map,
-        position: new LatLng(last['latitude'], last['longitude']),
+        position: new LatLng(last['lat'], last['lng']),
         title: last['name']
     })
     const infowindow = new InfoWindow({
