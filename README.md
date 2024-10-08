@@ -41,11 +41,11 @@ Given that the charge network represents all possible legs for the EV, routing f
 ## Simulating Battery
 
 After a route has been found, the start battery of the EV is initialized based on the user input. Battery depletion is simulated linearly with road distance. Battery charging is simulated following a non-linear regression of current battery technology where the charge rate diminishes as the battery approaches fully charged[^4]. With this in mind, at each charge station, the EV is only simulated to charge *just* enough to make it to the next charge station as charging more than that will be at an unoptimal charge rate.
-[^4]: Currently [this](https://www.desmos.com/calculator/fusfey6wwn) is the regression function used.
+[^4]: Currently [this](https://www.desmos.com/calculator/ga6tdfmyms) is the regression function used.
 
 # Web App Implementation
 
-The Python logic in the backend retrieves user input and serves output to the web app using the [Flask](https://flask.palletsprojects.com/) framework, along with [Jinja](https://jinja.palletsprojects.com/) interpolated HTML, and static JavaScript. Flask is also used to store user input as a cookie on form submission.
+The Python logic in the backend retrieves user input and serves output to the web app using the [Flask](https://flask.palletsprojects.com/) framework, along with [Jinja](https://jinja.palletsprojects.com/) interpolated HTML, and static JavaScript. Flask is also used to store user input as a cookie on form submission. Three [Google Maps API](https://developers.google.com/maps/documentation) endpoints are used. All 3 are rate limited via "quotas". The Directions endpoint is only called on the backend and is further restricted by IP. The Places endpoint is also only called on the backend, but since it is billed by token sessions, the "quota" rate limit is not helpful. Thus, an [SQLite](https://www.sqlite.org/) database is used for token and session logic to enforce request limits via the API wrapper routes of this Flask app. It is also restricted by IP. Finally, the JavaScript Maps endpoint is called by the frontend and is both stored in unicode code points to avoid it being scraped from GitHub and restricted by HTTP referrer. 
 
 # Deployment
 
@@ -54,16 +54,7 @@ This project is deployed on an x86 AWS EC2 instance running AL2023. The Flask ap
 The following commands were used.
 
 ```shell
-sudo dnf install git
-git clone https://github.com/skrukwa/ev-trip-sim.git
-```
-```shell
-sudo dnf install python3.11
-python3.11 -m venv
-```
-``` shell
 sudo dnf install nginx
-
 sudo nano /etc/nginx/conf.d/main.conf
 
 # server {
@@ -72,7 +63,10 @@ sudo nano /etc/nginx/conf.d/main.conf
 #         proxy_pass http://0.0.0.0:5000;
 #     }
 # }
+
+sudo systemctl start nginx
 ```
+
 ```shell
 sudo python3 -m venv /opt/certbot/
 sudo /opt/certbot/bin/pip install certbot certbot-nginx
@@ -81,8 +75,13 @@ sudo certbot --nginx
 
 echo "0 0,12 * * * root /opt/certbot/bin/python -c 'import random; import time; time.sleep(random.random() * 3600)' && sudo certbot renew -q" | sudo tee -a /etc/crontab > /dev/null
 ```
-```shell
-sudo systemctl start nginx  # start nginx
 
-gunicorn --chdir /home/ec2-user/ev-trip-sim --bind 0.0.0.0:5000 wsgi:app  # start gunicorn (from 3.11 venv)
+```shell
+sudo dnf install git python3.11
+git clone https://github.com/skrukwa/evsim.git
+cd evsim/src
+python3.11 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+gunicorn --bind 0.0.0.0:5000 app:app
 ```
