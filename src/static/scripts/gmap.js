@@ -14,7 +14,7 @@ async function initMap() {
     const { AdvancedMarkerElement } = await google.maps.importLibrary('marker')
 
     const map = new Map(document.getElementById('map'), {
-        mapId: 'e56f3f697b76370a',
+        mapId: '1c01e0202602fb92',
         mapTypeControl: false
     })
 
