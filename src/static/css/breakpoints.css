@@ -1,0 +1,83 @@
+h1 {
+    font-size: 3.5rem;
+}
+
+h2 {
+    font-size: 2.25rem;
+}
+
+h3 {
+    font-size: 1.75rem;
+}
+
+h4 {
+    font-size: 1.5rem;
+}
+
+p {
+    font-size: 1.125rem;
+}
+
+main {
+    max-width: 70vw;
+    max-height: 90lvh;
+    padding: 3rem 6rem;
+}
+
+/* tablet */
+@media (max-width: 72rem) {
+
+    h1 {
+        font-size: 2.75rem;
+    }
+
+    h2 {
+        font-size: 2rem;
+    }
+
+    h3 {
+        font-size: 1.625rem;
+    }
+
+    h4 {
+        font-size: 1.375rem;
+    }
+
+    p {
+        font-size: 1rem;
+    }
+
+    main {
+        max-width: 80vw;
+        padding: 2rem 4rem;
+    }
+}
+
+/* mobile */
+@media (max-width: 56rem) {
+
+    h1 {
+        font-size: 2.125rem;
+    }
+
+    h2 {
+        font-size: 1.875rem;
+    }
+
+    h3 {
+        font-size: 1.375rem;
+    }
+
+    h4 {
+        font-size: 1.25rem;
+    }
+
+    p {
+        font-size: 1rem;
+    }
+
+    main {
+        max-width: 90vw;
+        padding: 1.5rem 1.5rem;
+    }
+}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="static/css/global.css">
+  <link rel="stylesheet" href="static/css/gmap.css">
+  <link rel="icon" type="image/x-icon" href="static/media/favicon.png">
+  <script type="text/javascript">const data = {{ result_dict | tojson | safe }}</script>
+  <script src="static/scripts/gmap.js" defer></script>
+  <title>evsim</title>
+  <meta name="description"
+        content="Get EV map routing by specifying location, range, and battery. Created by Evan Skrukwa.">
+</head>
+<body>
+<div id="side">
+  <span>total charge time: <b>{{ result_dict['path_summary']['total_charge_time'] }}</b></span>
+  <span>total driving time: <b>{{ result_dict['path_summary']['total_driving_time'] }}</b></span>
+  <span>total road distance: <b>{{ result_dict['path_summary']['total_driving_distance'] }}</b></span>
+  <span>total time: <b>{{ result_dict['path_summary']['total_time'] }}</b></span>
+  <div class="bar"></div>
+  {% for leg in result_dict['legs_summary'] %}
+  <span>{{ leg['charge_station']['name'] }}</span>
+  <span>charge for <b>{{ leg['charge_time'] }}</b> from <b>{{ leg['battery_start'] }}</b> to <b>{{ leg['battery_end'] }}</b></span>
+  <span>then drive for <b>{{ leg['driving_time'] }}</b> over <b>{{ leg['driving_distance'] }}</b></span>
+  <div class="bar"></div>
+  {% endfor %}
+  <span>{{ result_dict['destination_summary']['charge_station']['name'] }}</span>
+  <span>arrive at destination with <b>{{ result_dict['destination_summary']['dest_start_battery'] }}</b> battery</span>
+</div>
+<main>
+  <div id="map"></div>
+</main>
+</body>
+</html>

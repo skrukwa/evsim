@@ -1,5 +1,0 @@
-dataset retrieved on 9/12/23 with location "All"
-
-https://afdc.energy.gov/fuels/electricity_locations.html#/analyze?fuel=ELEC
-
-network created with cluster_diameter=60

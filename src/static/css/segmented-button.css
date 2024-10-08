@@ -1,0 +1,57 @@
+.segmented-button-div {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    width: 100%;
+    border: 1px solid var(--white-gray);
+    border-radius: 1rem;
+}
+
+.segmented-button-div label {
+    color: var(--dark-green);
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    align-items: center;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border-right: 1px solid var(--white-gray);
+    outline: none;
+}
+
+.segmented-button-div label:first-of-type {
+    border-radius: calc(1rem - 1px) 0 0 calc(1rem - 1px);
+}
+
+.segmented-button-div label:last-of-type {
+    border-radius: 0 calc(1rem - 1px) calc(1rem - 1px) 0;
+    border-right: none;
+}
+
+@media (max-aspect-ratio: 1/1), (max-width: 50rem), (max-height: 42rem) {
+    .segmented-button-div {
+        grid-template-columns: 1fr;
+    }
+
+    .segmented-button-div label {
+        border-right: none;
+        border-bottom: 1px solid var(--white-gray);
+    }
+
+    .segmented-button-div label:first-of-type {
+        border-radius: calc(1rem - 1px) calc(1rem - 1px) 0 0;
+    }
+
+    .segmented-button-div label:last-of-type {
+        border-radius: 0 0 calc(1rem - 1px) calc(1rem - 1px);
+        border-bottom: none;
+    }
+}
+
+.segmented-button-div label:hover {
+    background-color: var(--white-green);
+}
+
+.segmented-button-div input:checked + label {
+    background-color: var(--light-green);
+}

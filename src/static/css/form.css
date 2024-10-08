@@ -1,0 +1,69 @@
+.flex-center {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.flex-space-between {
+    display: flex;
+    justify-content: space-between;
+}
+
+svg {
+    min-width: 100%;
+    min-height: 100%;
+    position: fixed;
+    overflow: hidden;
+    right: 0;
+    z-index: -1;
+}
+
+main {
+    width: 40rem;
+    background-color: var(--white);
+    border-radius: 2rem;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 2px 4px 0;
+    overflow-y: scroll;
+}
+
+main > div {
+    margin-bottom: 2rem;
+}
+
+main > form > * {
+    margin-bottom: 1rem;
+}
+
+#advanced-options {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 0.5rem;
+    margin: 2rem 0.5rem;
+}
+
+#advanced-options label {
+    grid-column: 1 / 4;
+}
+
+#advanced-options input[type=text] {
+    grid-column: 5 / 9;
+    min-width: 12ch;
+}
+
+#advanced-options input[type=number] {
+    grid-column: 8 / 9;
+}
+
+#advanced-options input[type=range] {
+    grid-column: 4 / 8;
+}
+
+#advanced-options-error {
+    grid-column: 1 / 9;
+    color: red;
+}
+
+main .button-full {
+    justify-self: right;
+}

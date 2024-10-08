@@ -1,0 +1,34 @@
+.autocomplete:has(.autocomplete-items) input {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.autocomplete-items {
+    border: 1px solid var(--white-gray);
+    border-top: none;
+    border-radius: 0 0 1rem 1rem;
+}
+
+.autocomplete-items div {
+    -webkit-line-clamp: 1;
+    padding: 0.25rem 0.625rem;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    line-height: 2rem;
+}
+
+.autocomplete-items div span {
+    color: var(--medium-green);
+}
+
+.autocomplete-items div:last-child {
+    border-radius: 0 0 calc(1rem - 1px) calc(1rem - 1px);
+}
+
+.autocomplete-items div:hover {
+    background-color: var(--white-gray);
+}
+

@@ -1,0 +1,46 @@
+html, body, #side, #map {
+    height: 100%;
+    background-color: var(--white);
+}
+
+body {
+    margin: 0;
+}
+
+body {
+    display: flex;
+}
+
+#side {
+    width: 24rem;
+    max-width: 50vw;
+    overflow-y: scroll;
+}
+
+#side span {
+    display: block;
+    margin: 0.75rem;
+}
+
+.bar {
+    height: 1px;
+    width: 100%;
+    background-color: var(--white-gray);
+}
+
+main {
+    flex-grow: 1;
+}
+
+@media (max-width: 60rem) {
+    body {
+        flex-direction: column-reverse;
+    }
+
+    #side {
+        width: 100%;
+        max-width: none;
+        height: 24rem;
+        max-height: 50lvh;
+    }
+}
