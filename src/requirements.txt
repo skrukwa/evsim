@@ -1,0 +1,7 @@
+flask
+googlemaps
+plotly
+pydantic
+requests
+shapely
+werkzeug

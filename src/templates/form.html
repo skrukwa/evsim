@@ -242,11 +242,11 @@
             <h4><a href="https://github.com/skrukwa/evsim">open-sourced</a> by <a
                     href="https://linkedin.com/in/skrukwa">Evan Skrukwa</a></h4>
         </div>
-        <form method="post">
+        <form method="post" autocomplete="off">
 
             <div class="text-input-div autocomplete">
                 <input type="text" id="start-location-input" name="start-location" placeholder=" "
-                       value='{{ session["start-location"] | default("") }}' required autocomplete="off">
+                       value='{{ session["start-location"] | default("") }}' required>
                 <label for="start-location-input">Start Location</label>
                 <!--
                 <div class="autocomplete-items">
@@ -255,14 +255,12 @@
                 </div>
                 -->
             </div>
-            <input type="hidden" id="start-lat-input" name="start-lat"
-                   value='{{ session["start-lat"] | default("") }}'>
-            <input type="hidden" id="start-lng-input" name="start-lng"
-                   value='{{ session["start-lng"] | default("") }}'>
+            <input type="hidden" id="start-lat-input" name="start-lat" value='{{ session["start-lat"] | default("") }}'>
+            <input type="hidden" id="start-lng-input" name="start-lng" value='{{ session["start-lng"] | default("") }}'>
 
             <div class="text-input-div autocomplete">
                 <input type="text" id="end-location-input" name="end-location" placeholder=" "
-                       value='{{ session["end-location"] | default("") }}' required autocomplete="off">
+                       value='{{ session["end-location"] | default("") }}' required>
                 <label for="end-location-input">End Location</label>
                 <!--
                 <div class="autocomplete-items">

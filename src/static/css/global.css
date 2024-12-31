@@ -24,7 +24,7 @@ body {
     margin: 0;
     color: var(--dark-green);
     background-color: var(--beige);
-    font-family: 'Nunito Sans', sans-serif;
+    font-family: sans-serif;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
 }
