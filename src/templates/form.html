@@ -244,7 +244,7 @@
         </div>
         <form method="post" autocomplete="off">
 
-            <div class="text-input-div autocomplete">
+            <div class="text-input-div autocomplete" id="start-location-container">
                 <input type="text" id="start-location-input" name="start-location" placeholder=" "
                        value='{{ session["start-location"] | default("") }}' required>
                 <label for="start-location-input">Start Location</label>
@@ -258,7 +258,7 @@
             <input type="hidden" id="start-lat-input" name="start-lat" value='{{ session["start-lat"] | default("") }}'>
             <input type="hidden" id="start-lng-input" name="start-lng" value='{{ session["start-lng"] | default("") }}'>
 
-            <div class="text-input-div autocomplete">
+            <div class="text-input-div autocomplete" id="end-location-container">
                 <input type="text" id="end-location-input" name="end-location" placeholder=" "
                        value='{{ session["end-location"] | default("") }}' required>
                 <label for="end-location-input">End Location</label>

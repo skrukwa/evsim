@@ -49,39 +49,60 @@ The Python logic in the backend retrieves user input and serves output to the we
 
 # Deployment
 
-This project is deployed on an x86 AWS EC2 instance running AL2023. The Flask app is run in a Python 3.11 venv using the WSGI HTTP server [Gunicorn](https://gunicorn.org/) which is run behind [Nginx](https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/) configured as a HTTP reverse proxy server (recommended by Gunicorn). SSL certificates are created and renewed using [Certbot](https://certbot.eff.org/) in its own venv.
+This project is deployed on an OCI Ampere A1 Flex VM running Oracle Linux 8[^5]. The Flask app is run in a Python 3.12 venv using the WSGI HTTP server [Gunicorn](https://gunicorn.org/) which is run behind [Nginx](https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/) configured as a HTTP reverse proxy server (recommended by Gunicorn). SSL certificates are created and renewed using [Certbot](https://certbot.eff.org/) in its own venv.
+[^5]: This used to be AWS EC2 but my free ran out :( .
 
-The following commands were used.
+The following commands were used (with `sudo` redacted for readability).
+
+### Installs
 
 ```shell
-sudo dnf install nginx
-sudo nano /etc/nginx/conf.d/main.conf
-
-# server {
-#     server_name www.evsim.ca evsim.ca;
-#     location / {
-#         proxy_pass http://0.0.0.0:5000;
-#     }
-# }
-
-sudo systemctl start nginx
+dnf install git python3.12 nginx
 ```
 
+### Oracle Linux 8 Quirks
+
 ```shell
-sudo python3 -m venv /opt/certbot/
-sudo /opt/certbot/bin/pip install certbot certbot-nginx
-sudo ln -s /opt/certbot/bin/certbot /usr/bin/certbot
-sudo certbot --nginx
+firewall-cmd --add-service=http --permanent
+firewall-cmd --add-service=https --permanent
+firewall-cmd --reload
+
+setsebool -P httpd_can_network_connect 1
+```
+
+### Nginx
+
+```shell
+cat > /etc/nginx/conf.d/main.conf << "EOF"
+server {
+    server_name www.evsim.ca evsim.ca;
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+    }
+}
+EOF
+
+systemctl start nginx
+```
+
+### Certbot
+
+```shell
+python3.12 -m venv /opt/certbot/
+/opt/certbot/bin/pip install certbot certbot-nginx
+ln -s /opt/certbot/bin/certbot /usr/bin/certbot
+certbot --nginx
 
 echo "0 0,12 * * * root /opt/certbot/bin/python -c 'import random; import time; time.sleep(random.random() * 3600)' && sudo certbot renew -q" | sudo tee -a /etc/crontab > /dev/null
 ```
 
+### Gunicorn
+
 ```shell
-sudo dnf install git python3.11
 git clone https://github.com/skrukwa/evsim.git
 cd evsim/src
 python3.11 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-gunicorn --bind 0.0.0.0:5000 app:app
+gunicorn --bind 127.0.0.1:5000 app:app
 ```

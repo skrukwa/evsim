@@ -1,8 +1,10 @@
+const startLocationContainer = document.getElementById('start-location-container')
 const startLocationInput = document.getElementById('start-location-input')
 const startLatInput = document.getElementById('start-lat-input')
 const startLngInput = document.getElementById('start-lng-input')
 const currentStartUUID = {'uuid': null, createdAt: null}
 
+const endLocationContainer = document.getElementById('end-location-container')
 const endLocationInput = document.getElementById('end-location-input')
 const endLatInput = document.getElementById('end-lat-input')
 const endLngInput = document.getElementById('end-lng-input')
@@ -10,19 +12,40 @@ const currentEndUUID = {'uuid': null, createdAt: null}
 
 const errorNotification = document.getElementById('error-notification')
 
-addAutocompleteListener(startLocationInput, startLatInput, startLngInput, currentStartUUID)
-addAutocompleteListener(endLocationInput, endLatInput, endLngInput, currentEndUUID)
+addAutocompleteListener(startLocationInput, startLocationContainer, startLatInput, startLngInput, currentStartUUID)
+addAutocompleteListener(endLocationInput, endLocationContainer, endLatInput, endLngInput, currentEndUUID)
 
 document.addEventListener('click', (event) => {
-    // when the user clicks anywhere in the document, close the dropdowns
-    const items = document.querySelector('.autocomplete-items')
-    if (items) {
-        items.remove()
+
+    // check if user is done typing in start input
+    if (!startLocationInput.contains(event.target)) {
+        // clear start input if user has not selected a prediction
+        if (startLatInput.value === '' || startLngInput.value === '') {
+            startLocationInput.value = ''
+        }
+        // remove start predictions
+        startLocationContainer.querySelector('.autocomplete-items')?.remove()
+
+    }
+
+    // check if user is done typing in end input
+    if (!endLocationInput.contains(event.target)) {
+        // clear end input if user has not selected a prediction
+        if (endLatInput.value === '' || endLngInput.value === '') {
+            endLocationInput.value = ''
+        }
+        // remove end predictions
+        endLocationContainer.querySelector('.autocomplete-items')?.remove()
     }
 })
 
-function addAutocompleteListener(inputElement, latElement, lngElement, uuid) {
+function addAutocompleteListener(inputElement, inputElementContainer, latElement, lngElement, uuid) {
+
     inputElement.addEventListener('input', async () => {
+        // invalidate previous pat/lng on new input
+        latElement.value = ''
+        lngElement.value = ''
+
         // early return
         if (inputElement.value.length < 3) {
             return
@@ -34,7 +57,7 @@ function addAutocompleteListener(inputElement, latElement, lngElement, uuid) {
             uuid.createdAt = Date.now()
         }
 
-        // fetch suggestions
+        // fetch predictions
         const resp = await fetch(`/googleapis/maps/api/place/autocomplete/json?`
             + `input=${inputElement.value}`
             + `&components=country:us|country:ca`
@@ -49,32 +72,28 @@ function addAutocompleteListener(inputElement, latElement, lngElement, uuid) {
             setTimeout(() => {
                 errorNotification.classList.remove('show')
             }, 5000)
+            return
         }
 
-        // display suggestions
-        autocomplete(inputElement, data['predictions'], latElement, lngElement, uuid)
+        displayPredictions(inputElement, inputElementContainer, data['predictions'], latElement, lngElement, uuid)
     })
 }
 
+function displayPredictions(inputElement, inputElementContainer, predictions, latElement, lngElement, uuid) {
+    // remove old autocomplete items
+    inputElementContainer.querySelector('.autocomplete-items')?.remove()
 
-function autocomplete(inputElement, predictions, latElement, lngElement, uuid) {
-    // check and remove old .autocomplete-items div
-    const oldItems = inputElement.parentNode.querySelector('.autocomplete-items')
-    if (oldItems) {
-        oldItems.remove()
-    }
-
-    // early return
+    // early return if no predictions
     if (predictions.length === 0) {
         return
     }
 
-    // create autocomplete-items div
+    // create autocomplete items container
     const items = document.createElement('div')
     items.setAttribute('class', 'autocomplete-items')
     inputElement.parentNode.appendChild(items)
 
-    // create new elements
+    // create dropdown items for predictions
     for (let prediction of predictions) {
         const description = prediction['description']
         const placeID = prediction['place_id']
@@ -82,7 +101,6 @@ function autocomplete(inputElement, predictions, latElement, lngElement, uuid) {
         const matches = prediction['structured_formatting']['main_text_matched_substrings']
         const secondaryText = prediction['structured_formatting']['secondary_text']
 
-        // create dropdown autocomplete item
         const item = document.createElement('div')
         let currentIndex = 0
         for (let match of matches) {
@@ -95,16 +113,19 @@ function autocomplete(inputElement, predictions, latElement, lngElement, uuid) {
             currentIndex = matchOffset + matchLength
         }
         item.innerHTML += mainText.slice(currentIndex) + ' <span>' + secondaryText + '</span>'
+
+        // handle click on a prediction
         item.addEventListener('click', async () => {
-
-            // update input value
-            inputElement.value = description
-
             // generate a new UUID if needed
             if (uuid.uuid === null || Date.now() - currentStartUUID.createdAt > 2 * 60 * 1000) {
                 uuid.uuid = self.crypto.randomUUID()
                 uuid.createdAt = Date.now()
             }
+
+            // set temp lat/lng values so that the input is not cleared by the document click handler
+            // which will be the next event in the event loop while awaiting the fetch below
+            latElement.value = '9.99'
+            lngElement.value = '9.99'
 
             // fetch place details
             const resp = await fetch(`/googleapis/maps/api/place/details/json?`
@@ -125,12 +146,18 @@ function autocomplete(inputElement, predictions, latElement, lngElement, uuid) {
                 setTimeout(() => {
                     errorNotification.classList.remove('show')
                 }, 5000)
+                inputElement.value = ''
+                latElement.value = ''
+                lngElement.value = ''
+                return
             }
 
-            // update hidden input values
+            // update input values
+            inputElement.value = description
             latElement.value = data['result']['geometry']['location']['lat']
             lngElement.value = data['result']['geometry']['location']['lng']
         })
+
         items.appendChild(item)
     }
 }

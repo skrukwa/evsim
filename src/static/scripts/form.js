@@ -137,7 +137,7 @@ function updateActiveStops() {
 
 function updateRequirements() {
     if (parseFloat(minBatteryInput.value) >= parseFloat(maxBatteryInput.value)) {
-        advancedOptionsError.innerText = `min battery (${minBatteryInput.value}) must be less than to max battery (${maxBatteryInput.value})`
+        advancedOptionsError.innerText = `min battery (${minBatteryInput.value}%) must be less than max battery (${maxBatteryInput.value}%)`
         submitButton.disabled = true
         lessStopsButton.checked = false
         balancedStopsButton.checked = false
@@ -147,7 +147,7 @@ function updateRequirements() {
 
     const effectiveRange = parseFloat(evRangeInput.value) * (parseFloat(maxBatterySlider.value) - parseFloat(minBatterySlider.value)) / 100
     if (effectiveRange > 700) {
-        advancedOptionsError.innerText = `effective range (${effectiveRange}) must be less than 700`
+        advancedOptionsError.innerText = `effective range (${effectiveRange}) must be less than 700km`
         submitButton.disabled = true
         lessStopsButton.checked = false
         balancedStopsButton.checked = false
@@ -157,7 +157,7 @@ function updateRequirements() {
 
     const minLegLength = parseFloat(minLegLengthInput.value)
     if (minLegLength >= effectiveRange) {
-        advancedOptionsError.innerText = `min leg length (${minLegLength}) must be less than effective range (${effectiveRange})`
+        advancedOptionsError.innerText = `min leg length (${minLegLength}km) must be less than effective range (${effectiveRange}km)`
         submitButton.disabled = true
         lessStopsButton.checked = false
         balancedStopsButton.checked = false
