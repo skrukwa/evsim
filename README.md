@@ -50,7 +50,7 @@ The Python logic in the backend retrieves user input and serves output to the we
 # Deployment
 
 This project is deployed on an OCI Ampere A1 Flex VM running Oracle Linux 8[^5]. The Flask app is run in a Python 3.12 venv using the WSGI HTTP server [Gunicorn](https://gunicorn.org/) which is run behind [Nginx](https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/) configured as a HTTP reverse proxy server (recommended by Gunicorn). SSL certificates are created and renewed using [Certbot](https://certbot.eff.org/) in its own venv.
-[^5]: This used to be AWS EC2 but my free ran out :( .
+[^5]: This used to be AWS EC2 but my free trial ran out 🙁.
 
 The following commands were used (with `sudo` redacted for readability).
 
