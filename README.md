@@ -101,7 +101,7 @@ echo "0 0,12 * * * root /opt/certbot/bin/python -c 'import random; import time; 
 ```shell
 git clone https://github.com/skrukwa/evsim.git
 cd evsim/src
-python3.11 -m venv venv
+python3.12 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 gunicorn --bind 127.0.0.1:5000 app:app
